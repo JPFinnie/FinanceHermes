@@ -432,7 +432,8 @@ function friendlyProviderMessage(err, provider) {
     if (err.status === 401 || err.status === 403)
       return `${where} rejected the API key. Check the key in the Vercel project's environment variables.`;
     if (err.status === 402) return `${where} reports insufficient credits on this API key.`;
-    if (err.status === 404) return `${where} could not find the model "${provider.model}". Check HERMES_MODEL.`;
+    if (err.status === 404)
+      return `${where} could not find the model "${provider.model}". Check HERMES_MODEL.${err.detail ? ` (${err.detail})` : ""}`;
     if (err.status === 429) return `${where} is rate-limiting right now. Give it a few seconds and try again.`;
     return `${where} returned an error (HTTP ${err.status}). ${err.detail || ""}`.trim();
   }

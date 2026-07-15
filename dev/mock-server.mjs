@@ -13,6 +13,11 @@
 // Flags: --port N (site, default 8787) --upstream N (mock APIs, default 8788)
 //        --no-keys  (start WITHOUT provider env, to exercise the graceful
 //                    misconfiguration path)
+//        --real     (do NOT mock anything: serve the site + the real agent
+//                    using whatever provider/search env is already set — e.g.
+//                    a local LM Studio/Ollama endpoint via HERMES_BASE_URL,
+//                    or real NOUS/OPENROUTER/TAVILY keys — no Vercel CLI
+//                    needed. See "Running it for $0" in the README.)
 // Env:   MOCK_INLINE_TOOLCALL=1 → mock emits Hermes-native inline
 //        <tool_call>{...}</tool_call> text instead of structured tool_calls.
 
@@ -31,6 +36,7 @@ const flag = (name, dflt) => {
 const PORT = parseInt(flag("port", "8787"), 10);
 const UPSTREAM_PORT = parseInt(flag("upstream", "8788"), 10);
 const NO_KEYS = args.includes("--no-keys");
+const REAL = args.includes("--real");
 const INLINE_TOOLCALL = process.env.MOCK_INLINE_TOOLCALL === "1";
 
 // ── Mock upstream: OpenAI-compatible chat completions + Tavily ─────────────
@@ -160,7 +166,10 @@ async function serveStatic(req, res) {
 }
 
 async function main() {
-  if (!NO_KEYS) {
+  if (REAL) {
+    // Leave the environment exactly as provided (real keys or a local
+    // OpenAI-compatible server such as LM Studio / Ollama).
+  } else if (!NO_KEYS) {
     process.env.HERMES_BASE_URL = `http://127.0.0.1:${UPSTREAM_PORT}/v1`;
     process.env.HERMES_API_KEY = "mock-key";
     process.env.HERMES_MODEL = process.env.HERMES_MODEL || "Hermes-4-405B-mock";
@@ -174,7 +183,7 @@ async function main() {
 
   const { default: agentHandler } = await import("../api/agent.js");
 
-  await new Promise((r) => upstream.listen(UPSTREAM_PORT, "127.0.0.1", r));
+  if (!REAL) await new Promise((r) => upstream.listen(UPSTREAM_PORT, "127.0.0.1", r));
 
   const site = http.createServer((req, res) => {
     if (new URL(req.url, "http://x").pathname === "/api/agent") return agentHandler(req, res);
@@ -183,8 +192,19 @@ async function main() {
   await new Promise((r) => site.listen(PORT, "127.0.0.1", r));
 
   console.log(`[mock] site        http://127.0.0.1:${PORT}/agent.html`);
-  console.log(`[mock] upstream    http://127.0.0.1:${UPSTREAM_PORT} (${NO_KEYS ? "UNUSED — no-keys mode" : "model + search mocks"})`);
-  console.log(`[mock] mode        ${NO_KEYS ? "no-keys (graceful failure path)" : INLINE_TOOLCALL ? "inline <tool_call> fallback" : "structured tool calls"}`);
+  if (REAL) {
+    const provider = process.env.HERMES_BASE_URL && process.env.HERMES_API_KEY
+      ? `custom endpoint ${process.env.HERMES_BASE_URL}`
+      : process.env.NOUS_API_KEY ? "Nous Portal"
+      : process.env.OPENROUTER_API_KEY ? "OpenRouter"
+      : "NONE — the page will show the misconfiguration error";
+    console.log(`[mock] provider    ${provider}${process.env.HERMES_MODEL ? ` (model ${process.env.HERMES_MODEL})` : ""}`);
+    console.log(`[mock] search      ${process.env.TAVILY_API_KEY ? "tavily" : "not configured (model-only)"}`);
+    console.log(`[mock] mode        real (no mocks — env-provided provider/search)`);
+  } else {
+    console.log(`[mock] upstream    http://127.0.0.1:${UPSTREAM_PORT} (${NO_KEYS ? "UNUSED — no-keys mode" : "model + search mocks"})`);
+    console.log(`[mock] mode        ${NO_KEYS ? "no-keys (graceful failure path)" : INLINE_TOOLCALL ? "inline <tool_call> fallback" : "structured tool calls"}`);
+  }
 }
 
 main().catch((err) => {

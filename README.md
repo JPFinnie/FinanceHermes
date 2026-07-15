@@ -70,12 +70,52 @@ mode (visible `<think>` traces — impressive, but slower).
 If a key is missing or wrong, the page shows a clear, friendly error card — it never
 crashes mid-demo.
 
+## Running it for $0
+
+Every layer has a free path (verified July 2026):
+
+| Layer | Free option | Limits that matter |
+| --- | --- | --- |
+| Hosting | Vercel Hobby plan | fine for this traffic; 60s function cap already configured |
+| Search | [Tavily free tier](https://www.tavily.com/pricing) — 1,000 credits/mo, no card | a run uses ~2–4 credits → hundreds of runs/mo |
+| Model (easiest) | OpenRouter's free Hermes endpoint: set `HERMES_MODEL=nousresearch/hermes-3-llama-3.1-405b:free` | free-pool rate limits (~20 req/min, ~200 req/day; each run = 2–4 requests); occasional congestion — warm it up before the meeting |
+| Model (first-party Hermes-4) | [Nous Portal free tier](https://portal.nousresearch.com) — $0/mo with $0.10 monthly credit | at Hermes-4-70B rates ($0.05/M in, $0.20/M out) ≈ a few dozen runs/mo |
+| Model (truly offline-priced) | Run Hermes locally via LM Studio or Ollama — official GGUFs exist for [Hermes-4.3-36B](https://huggingface.co/NousResearch/Hermes-4.3-36B-GGUF), Hermes-4-14B/70B/405B | needs your hardware: 14B Q4 ≈ any 16GB Mac; 36B Q4 wants 32GB+ |
+
+For a **fully local, zero-key-cost live demo** (model on your laptop, real web search
+on Tavily's free tier, no Vercel involved):
+
+```bash
+# 1. In LM Studio: download a Hermes GGUF and start the local server (⌘R),
+#    or: ollama pull hermes3   (then ollama serve)
+# 2. Point the real agent at it:
+HERMES_BASE_URL=http://127.0.0.1:1234/v1 HERMES_API_KEY=lm-studio \
+HERMES_MODEL=hermes-4.3-36b TAVILY_API_KEY=tvly-... \
+npm run local          # → http://127.0.0.1:8787/agent.html
+```
+
+`npm run local` (`dev/mock-server.mjs --real`) serves the site and the *real*
+`api/agent.js` with whatever env you give it — it also works with real
+`NOUS_API_KEY`/`OPENROUTER_API_KEY` keys when you want the cloud path without
+deploying. (LM Studio's default port is 1234; Ollama's OpenAI-compatible endpoint is
+`http://127.0.0.1:11434/v1` with any non-empty API key.)
+
+Reality check: this demo is nearly free even on paid keys — a full research run on
+Hermes-4-70B costs a fraction of a cent, and Tavily's free tier absorbs the
+searches. The free OpenRouter pool is the riskier choice for a *live* room (shared
+capacity); the safest $0 setups are the Nous free credit or a local model, with
+`npm run mock` as the offline safety net either way.
+
 ## Local dev & rehearsal
 
 ```bash
 # real thing locally (needs keys in .env):
 cp .env.example .env   # fill in keys
 npm run dev            # vercel dev
+
+# real thing locally WITHOUT the Vercel CLI — uses exported env vars as-is
+# (real keys, or a local LM Studio/Ollama endpoint; see "Running it for $0"):
+npm run local
 
 # OFFLINE rehearsal — no keys, no network; mock model + mock search wired
 # through the real agent loop and real UI:

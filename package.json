@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vercel dev",
     "mock": "node dev/mock-server.mjs",
+    "local": "node dev/mock-server.mjs --real",
     "test": "node dev/test.mjs"
   }
 }

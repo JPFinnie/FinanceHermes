@@ -82,7 +82,7 @@ Every layer has a free path (verified July 2026):
 | Hosting | Vercel Hobby plan | fine for this traffic; 60s function cap already configured |
 | Search | [Tavily free tier](https://www.tavily.com/pricing) — 1,000 credits/mo, no card | a run uses ~2–4 credits → hundreds of runs/mo |
 | Model (easiest) | OpenRouter's free Hermes endpoint: set `HERMES_MODEL=nousresearch/hermes-3-llama-3.1-405b:free` | free-pool rate limits (~20 req/min, ~200 req/day; each run = 2–4 requests); occasional congestion — warm it up before the meeting |
-| Model (first-party Hermes-4) | [Nous Portal free tier](https://portal.nousresearch.com) — $0/mo with $0.10 monthly credit | at Hermes-4-70B rates ($0.05/M in, $0.20/M out) ≈ a few dozen runs/mo |
+| Model (first-party Hermes-4) | [Nous Portal](https://portal.nousresearch.com) — cheapest *paid* path, not free: the free tier's $0.10 subscription credit does **not** unlock the paid catalog models, so Hermes requires a one-time top-up (non-expiring) | at Hermes-4-405B rates ($0.09/M in, $0.37/M out) a $5 top-up ≈ thousands of runs |
 | Model (truly offline-priced) | Run Hermes locally via LM Studio or Ollama — official GGUFs exist for [Hermes-4.3-36B](https://huggingface.co/NousResearch/Hermes-4.3-36B-GGUF), Hermes-4-14B/70B/405B | needs your hardware: 14B Q4 ≈ any 16GB Mac; 36B Q4 wants 32GB+ |
 
 For a **fully local, zero-key-cost live demo** (model on your laptop, real web search

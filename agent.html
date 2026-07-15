@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Agent — FinanceHermes</title>
+  <meta name="description" content="Live financial-research agent: a Hermes model from Nous Research running a real tool-calling loop with live web search.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/agent.css">
+</head>
+<body>
+  <canvas id="field" aria-hidden="true"></canvas>
+
+  <div class="shell">
+    <nav class="nav" aria-label="Primary">
+      <a class="wordmark" href="/">Finance<span>Hermes</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/agent.html" aria-current="page">Research Agent</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <p class="kicker">Live demo · Hermes-4 · real-time web search</p>
+      <h1>Financial research, run by an agent.</h1>
+      <p class="lede">
+        Ask a market question. A <strong>Hermes model from Nous Research</strong> plans the research,
+        calls a live web-search tool, reads what it finds, and synthesizes an answer —
+        every step streamed below as it happens. Nothing is canned.
+      </p>
+    </header>
+
+    <main>
+      <form id="composer" class="composer" autocomplete="off">
+        <input id="query" name="query" type="text" maxlength="2000" required
+               placeholder="e.g. What moved NVDA today, and what’s the current analyst sentiment?"
+               aria-label="Research question">
+        <button id="ask" type="submit">Ask</button>
+        <button id="stop" type="button">Stop</button>
+      </form>
+
+      <div class="chips" aria-label="Example questions">
+        <button type="button" data-q="What moved NVDA today, and what’s the current analyst sentiment?">NVDA today + sentiment</button>
+        <button type="button" data-q="Summarize the most recent Federal Reserve rate commentary and how markets reacted.">Latest Fed commentary</button>
+        <button type="button" data-q="How did the big Canadian banks’ most recent quarterly earnings compare, and what stood out?">Canadian bank earnings</button>
+        <button type="button" data-q="What is the latest US CPI print, and how did bonds and equities react?">Latest CPI + reaction</button>
+      </div>
+
+      <div id="runbar" class="runbar" aria-live="polite">
+        <span class="dot"></span>
+        <span id="runbar-text"></span>
+      </div>
+
+      <div id="trace" aria-live="polite"></div>
+    </main>
+
+    <footer class="foot">
+      <span>Live demo — real model, live web data. Research &amp; education only; not investment advice.</span>
+      <span>Built on <a href="https://nousresearch.com" target="_blank" rel="noopener noreferrer">Hermes by Nous Research</a></span>
+    </footer>
+  </div>
+
+  <script src="/assets/agent-field.js" defer></script>
+  <script src="/assets/agent.js" defer></script>
+</body>
+</html>

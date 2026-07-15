@@ -1,0 +1,15 @@
+{
+  "name": "financehermes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Live financial-research agent demo — Hermes (Nous Research) + live web search on Vercel serverless.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "mock": "node dev/mock-server.mjs",
+    "test": "node dev/test.mjs"
+  }
+}

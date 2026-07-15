@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FinanceHermes</title>
+  <meta name="description" content="FinanceHermes — a live agentic financial-research demo built on Hermes by Nous Research.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/agent.css">
+</head>
+<body>
+  <canvas id="field" aria-hidden="true"></canvas>
+
+  <div class="shell">
+    <nav class="nav" aria-label="Primary">
+      <a class="wordmark" href="/">Finance<span>Hermes</span></a>
+      <!-- When merging into jpfinnie/website, this discreet link is the one
+           line to add to the main site's nav: -->
+      <div class="nav-links">
+        <a href="/agent.html">Research Agent</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <p class="kicker">Agentic AI · live, not simulated</p>
+      <h1>FinanceHermes</h1>
+      <p class="lede">
+        A working financial-research agent built on a <strong>Hermes model from Nous Research</strong>.
+        It calls a live model, runs real web searches, and streams every step of its
+        reasoning — built as a standalone page, served by Vercel serverless functions.
+      </p>
+    </header>
+
+    <main>
+      <div class="cards">
+        <a class="card" href="/agent.html">
+          <h2>✦ Open the Research Agent</h2>
+          <p>Ask about market moves, earnings, analyst sentiment, or central-bank commentary —
+             and watch the agent think, search, read, and answer in real time.</p>
+          <span class="go">Launch demo →</span>
+        </a>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <span>Research &amp; education only; not investment advice.</span>
+      <span>Built on <a href="https://nousresearch.com" target="_blank" rel="noopener noreferrer">Hermes by Nous Research</a></span>
+    </footer>
+  </div>
+
+  <script src="/assets/agent-field.js" defer></script>
+</body>
+</html>

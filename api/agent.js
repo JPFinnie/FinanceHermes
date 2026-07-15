@@ -27,7 +27,7 @@
 
 const NOUS_BASE_URL = "https://inference-api.nousresearch.com/v1";
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
-const NOUS_DEFAULT_MODEL = "hermes-4-405b";
+const NOUS_DEFAULT_MODEL = "nousresearch/hermes-4-405b";
 const OPENROUTER_DEFAULT_MODEL = "nousresearch/hermes-4-405b";
 const TAVILY_DEFAULT_BASE_URL = "https://api.tavily.com";
 

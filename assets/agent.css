@@ -490,6 +490,68 @@ body {
   margin-top: 12px;
 }
 
+/* ── Methodology page (methodology.html) ─────────────────────────────── */
+
+.doc { display: flex; flex-direction: column; gap: 14px; }
+
+.doc section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  backdrop-filter: blur(6px);
+}
+
+.doc .doc-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 6px;
+}
+
+.doc h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.35rem;
+  line-height: 1.25;
+  margin: 0 0 12px;
+}
+
+.doc p {
+  margin: 10px 0;
+  color: var(--ink-dim);
+  font-size: 0.95rem;
+}
+
+.doc p:last-child { margin-bottom: 0; }
+
+.doc strong { color: var(--ink); font-weight: 600; }
+
+.doc em { color: var(--ink); }
+
+.doc ul, .doc ol { margin: 10px 0 0; padding-left: 22px; color: var(--ink-dim); font-size: 0.95rem; }
+
+.doc li { margin: 8px 0; }
+
+.doc a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+.doc a:hover { border-color: var(--accent); }
+
+.doc code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--bg-raise);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
 /* ── Footer ──────────────────────────────────────────────────────────── */
 
 .foot {

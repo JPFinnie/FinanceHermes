@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Methodology — FinanceHermes</title>
+  <meta name="description" content="How FinanceHermes works: Nous Research, the Hermes 4 model, and the live agentic research loop behind the demo.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/agent.css">
+</head>
+<body>
+  <canvas id="field" aria-hidden="true"></canvas>
+
+  <div class="shell">
+    <nav class="nav" aria-label="Primary">
+      <a class="wordmark" href="/">Finance<span>Hermes</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/agent.html">Research Agent</a>
+        <a href="/methodology.html" aria-current="page">Methodology</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <p class="kicker">Methodology · what's under the hood</p>
+      <h1>How this demo works</h1>
+      <p class="lede">
+        FinanceHermes is a real agent, not a recording. This page explains the three layers
+        behind it: <strong>Nous Research</strong> (who builds the model),
+        <strong>Hermes&nbsp;4</strong> (how the model reasons), and the
+        <strong>research loop</strong> you watch run on the agent page.
+      </p>
+    </header>
+
+    <main class="doc">
+      <section>
+        <p class="doc-label">The lab</p>
+        <h2>What is Nous Research?</h2>
+        <p>
+          <a href="https://nousresearch.com" target="_blank" rel="noopener noreferrer">Nous Research</a>
+          is an independent AI research lab that grew out of the open-source model community.
+          It is best known for the <strong>Hermes</strong> family of open-weight language
+          models — post-trained models that emphasize strong instruction following,
+          transparent reasoning, and user steerability — along with widely used open
+          training datasets and research into decentralized model training.
+        </p>
+        <p>
+          Where most frontier models are closed systems accessed only through an API,
+          Hermes models are released with open weights: anyone can inspect them, run them
+          on their own hardware, or fine-tune them. This demo uses a hosted Hermes model
+          through Nous Research's own inference platform,
+          <a href="https://portal.nousresearch.com" target="_blank" rel="noopener noreferrer">Nous Portal</a>,
+          but the same model can run entirely offline.
+        </p>
+      </section>
+
+      <section>
+        <p class="doc-label">The model</p>
+        <h2>Hermes 4: a hybrid reasoning model</h2>
+        <p>
+          The default model here is <strong>Hermes&nbsp;4&nbsp;405B</strong>, built on
+          Meta's Llama&nbsp;3.1&nbsp;405B foundation and post-trained by Nous Research on
+          a large corpus weighted toward explicit reasoning — math, code, logic, and
+          step-by-step problem solving. It has a 128K-token context window.
+        </p>
+        <p>Three properties of Hermes 4 do the heavy lifting in this demo:</p>
+        <ul>
+          <li>
+            <strong>Hybrid reasoning.</strong> Hermes 4 can choose to deliberate privately
+            inside <code>&lt;think&gt;…&lt;/think&gt;</code> blocks before committing to an
+            answer. When deep-thinking mode is enabled, the agent page shows these traces
+            as the italic <em>thinking</em> block — you are literally watching the model
+            reason.
+          </li>
+          <li>
+            <strong>Schema-adherent function calling.</strong> The model is trained to emit
+            structured tool calls that match a declared JSON schema. That reliability is
+            what lets a two-tool research loop run unsupervised: when Hermes decides to
+            search, it produces a well-formed <code>web_search</code> call, not prose about
+            searching.
+          </li>
+          <li>
+            <strong>Steerability.</strong> Hermes models are trained to follow the system
+            prompt closely. The finance-research persona, the citation requirements, and
+            the "answer from sources, not memory" discipline all come from a single system
+            prompt the model actually honors.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <p class="doc-label">The loop</p>
+        <h2>Anatomy of one research run</h2>
+        <p>
+          Every run on the <a href="/agent.html">agent page</a> follows the same loop —
+          the classic agentic pattern of <em>reason → act → observe</em>, repeated until
+          the model decides it has enough to answer:
+        </p>
+        <ol>
+          <li>
+            <strong>Framing.</strong> Your question is wrapped in a system prompt that sets
+            the role (financial research analyst), today's date, and the rules: search
+            before asserting, cite sources, distinguish fact from sentiment.
+          </li>
+          <li>
+            <strong>Planning.</strong> Hermes reads the question and decides what it needs.
+            Usually that means emitting one or more tool calls rather than answering
+            immediately.
+          </li>
+          <li>
+            <strong>Acting.</strong> The agent has exactly two tools, both backed by the
+            <a href="https://www.tavily.com" target="_blank" rel="noopener noreferrer">Tavily</a>
+            search API: <code>web_search</code> (live web search) and
+            <code>web_extract</code> (fetch a page or PDF and convert it to readable text).
+            These hit the live web — results differ day to day, which is the point.
+          </li>
+          <li>
+            <strong>Observing.</strong> Tool results are handed back to the model as
+            structured messages. It reads them, and either digs deeper (another search,
+            a page extraction) or moves to answer.
+          </li>
+          <li>
+            <strong>Synthesis.</strong> When the model judges it has enough evidence — or
+            the loop hits its budget of 6 steps / ~50 seconds — it writes the final
+            answer, citing the sources it actually read.
+          </li>
+        </ol>
+        <p>
+          Every event in that loop — thinking deltas, tool calls, tool results, the answer
+          streaming in — is pushed to your browser over a server-sent-event stream as it
+          happens. Nothing is pre-computed or replayed.
+        </p>
+      </section>
+
+      <section>
+        <p class="doc-label">The plumbing</p>
+        <h2>Engineering guardrails</h2>
+        <ul>
+          <li>
+            <strong>Serverless, keys stay server-side.</strong> The loop runs in a single
+            Vercel serverless function. API keys for the model and search backends live in
+            server environment variables and never reach the browser.
+          </li>
+          <li>
+            <strong>Conservative decoding.</strong> Temperature 0.4 and a 4,096-token
+            output cap — tuned for factual synthesis rather than creativity.
+          </li>
+          <li>
+            <strong>Bounded runs.</strong> A hard budget of 6 agent steps and a ~50-second
+            deadline, with per-call timeouts on both the model and the tools. If the
+            deadline approaches mid-research, the agent is asked to wrap up with what it
+            has.
+          </li>
+          <li>
+            <strong>Two tool-call dialects.</strong> The loop accepts standard OpenAI-style
+            structured tool calls <em>and</em> Hermes' native inline
+            <code>&lt;tool_call&gt;{…}&lt;/tool_call&gt;</code> format, so tool use keeps
+            working across providers and serving stacks.
+          </li>
+          <li>
+            <strong>Failures degrade gracefully.</strong> A bad key, a missing model, or a
+            rate limit produces a plain-language error card — with the upstream detail
+            attached — instead of a crash.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <p class="doc-label">The caveats</p>
+        <h2>Limitations, honestly stated</h2>
+        <ul>
+          <li>
+            The agent answers from what it finds on the live web in under a minute. Search
+            results vary in quality and freshness; a thin news day yields a thin answer.
+          </li>
+          <li>
+            Language models can misread a source, over-weight a headline, or blend
+            sentiment with fact. Citations are provided precisely so you can check them.
+          </li>
+          <li>
+            This is a demonstration of agentic AI methodology, for research and education.
+            It is <strong>not investment advice</strong>, and no output here should be
+            treated as a recommendation to buy or sell anything.
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>Research &amp; education only; not investment advice.</span>
+      <span>Built on <a href="https://nousresearch.com" target="_blank" rel="noopener noreferrer">Hermes by Nous Research</a></span>
+    </footer>
+  </div>
+
+  <script src="/assets/agent-field.js" defer></script>
+</body>
+</html>

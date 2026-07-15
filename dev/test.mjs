@@ -155,6 +155,8 @@ async function scenarioHttpContract() {
     ok(idx.includes('href="/agent.html"'), "index.html links to /agent.html");
     const page = await fetch("http://127.0.0.1:8797/agent.html");
     ok(page.status === 200 && (await page.text()).includes("composer"), "agent.html serves");
+    const meth = await fetch("http://127.0.0.1:8797/methodology.html");
+    ok(meth.status === 200 && (await meth.text()).includes("Nous Research"), "methodology.html serves");
     for (const asset of ["/assets/agent.css", "/assets/agent.js", "/assets/agent-field.js"]) {
       const a = await fetch(`http://127.0.0.1:8797${asset}`);
       ok(a.status === 200, `${asset} serves`);

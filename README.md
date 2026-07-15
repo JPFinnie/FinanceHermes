@@ -62,10 +62,13 @@ the demo. If tool-calling ever feels flaky on a given provider, the inline
    arriving in one lump at the end.
 4. Open `/agent.html` and ask something.
 
-Defaults: `hermes-4-405b` on Nous Portal, `nousresearch/hermes-4-405b` on OpenRouter.
-Set `HERMES_MODEL` to override — `hermes-4-70b` or `hermes-4.3-36b` are snappier if
-405B feels slow for live use. `HERMES_REASONING=1` turns on Hermes-4 deep-thinking
-mode (visible `<think>` traces — impressive, but slower).
+Defaults: `nousresearch/hermes-4-405b` on both Nous Portal and OpenRouter — the
+Portal's chat-completions endpoint resolves models through the same namespaced
+catalog OpenRouter uses, so the `nousresearch/` prefix is required on both.
+Set `HERMES_MODEL` to override — `nousresearch/hermes-4-70b` or
+`nousresearch/hermes-4.3-36b` are snappier if 405B feels slow for live use.
+`HERMES_REASONING=1` turns on Hermes-4 deep-thinking mode (visible `<think>`
+traces — impressive, but slower).
 
 If a key is missing or wrong, the page shows a clear, friendly error card — it never
 crashes mid-demo.

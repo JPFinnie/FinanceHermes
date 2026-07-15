@@ -62,8 +62,8 @@ the demo. If tool-calling ever feels flaky on a given provider, the inline
    arriving in one lump at the end.
 4. Open `/agent.html` and ask something.
 
-Defaults: `Hermes-4-405B` on Nous Portal, `nousresearch/hermes-4-405b` on OpenRouter.
-Set `HERMES_MODEL` to override — `Hermes-4-70B` or `Hermes-4.3-36B` are snappier if
+Defaults: `hermes-4-405b` on Nous Portal, `nousresearch/hermes-4-405b` on OpenRouter.
+Set `HERMES_MODEL` to override — `hermes-4-70b` or `hermes-4.3-36b` are snappier if
 405B feels slow for live use. `HERMES_REASONING=1` turns on Hermes-4 deep-thinking
 mode (visible `<think>` traces — impressive, but slower).
 

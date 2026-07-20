@@ -201,6 +201,11 @@ async function scenarioLearnMode() {
     ok(done?.mode === "learn", "done reports learn mode");
     ok(/professionally managed fund/.test(done?.answer || ""), "answer includes article content");
     ok(/investorsedge\.cibc\.com\/en\/learn/.test(done?.answer || ""), "answer links back to CIBC Learn pages");
+    ok(
+      !/tfsa-basics/.test(done?.answer || "") && /what-is-tfsa\.html/.test(done?.answer || ""),
+      "invented article URL repaired to the real page"
+    );
+    ok(!/\]\(\/en\//.test(done?.answer || ""), "no relative links survive in the final answer");
     const badMode = await fetch("http://127.0.0.1:8799/api/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

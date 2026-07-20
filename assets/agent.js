@@ -63,7 +63,7 @@
   // repeats one it would 404 on this domain, so resolve those to
   // investorsedge.cibc.com before the safety check.
   const resolveHref = (url) =>
-    safeHref(/^\/en\//i.test(url) ? "https://www.investorsedge.cibc.com" + url : url);
+    safeHref(/^\/(en|fr)\//i.test(url) ? "https://www.investorsedge.cibc.com" + url : url);
 
   function inlineMd(s) {
     // input is already HTML-escaped

@@ -316,9 +316,12 @@ function docFreq(token) {
   }
   return DF.get(token) || 0;
 }
+// Continuous weight so a distinctive token ("rrsp", df≈3) always outranks a
+// common one ("guide", df≈7) instead of landing in the same coarse bucket
+// and tie-breaking alphabetically.
 const rarity = (t) => {
-  const df = docFreq(t);
-  return df <= 2 ? 3 : df <= 6 ? 2 : 1;
+  const df = Math.max(docFreq(t), 1);
+  return 4 / (1 + Math.log2(df));
 };
 
 // Rank library entries against free-text keywords. Scoring is intentionally
@@ -377,19 +380,24 @@ const clipText = (s, n) => {
   return s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s;
 };
 
-// Normalize any reasonable spelling of a Learn URL (relative path, missing
-// www, http, query strings) to the content-store path, or null if it is not a
-// Learn page at all.
+// Normalize any reasonable spelling of a Learn URL — relative path, missing
+// www, http, query strings, trailing punctuation, a wrong cibc.com host, or a
+// French /fr/learn path — to the content-store path, or null if it is not a
+// CIBC URL at all.
 function learnPath(url) {
-  let u = String(url || "").trim();
+  let u = String(url || "").trim().replace(/[.,;:!?]+$/, "");
   if (!u) return null;
   if (u.startsWith("/")) u = LEARN_BASE_URL + u;
-  u = u
-    .replace(/^http:\/\//i, "https://")
-    .replace(/^https:\/\/investorsedge\./i, "https://www.investorsedge.")
-    .split(/[?#]/)[0];
-  if (!u.toLowerCase().startsWith(LEARN_BASE_URL)) return null;
-  return u.slice(LEARN_BASE_URL.length);
+  if (!/^https?:\/\//i.test(u)) return null;
+  let parsed;
+  try {
+    parsed = new URL(u);
+  } catch {
+    return null;
+  }
+  if (!/(^|\.)cibc\.com$/i.test(parsed.hostname)) return null;
+  // The FR pages mirror the EN structure; map them onto the EN library.
+  return parsed.pathname.replace(/^\/fr\/learn(?=\/|\.html$)/i, "/en/learn");
 }
 
 // Execute a learn_read tool call against the local content store; same
@@ -473,9 +481,9 @@ export function repairLearnLinks(md) {
     const hits = searchLearnLibrary(`${text || ""} ${slug}`, 1);
     return hits.length ? hits[0].url : ""; // "" → drop the dead link, keep the text
   };
-  // Markdown links: [text](url)
+  // Markdown links: [text](url) — any cibc.com host, plus relative en/fr paths.
   md = md.replace(
-    /\[([^\]]+)\]\(\s*((?:https?:\/\/[^\s)]*investorsedge\.cibc\.com[^\s)]*|\/en\/learn[^\s)]*))\s*\)/gi,
+    /\[([^\]]+)\]\(\s*((?:https?:\/\/[^\s)]*cibc\.com[^\s)]*|\/(?:en|fr)\/learn[^\s)]*))\s*\)/gi,
     (m, text, url) => {
       const fixed = repair(url, text);
       if (fixed === null) return m;
@@ -484,7 +492,7 @@ export function repairLearnLinks(md) {
   );
   // Bare URLs outside markdown syntax.
   md = md.replace(
-    /(^|[^("\[\]])((?:https?:\/\/)(?:www\.)?investorsedge\.cibc\.com\/[^\s)\]<>"']+)/gi,
+    /(^|[^("\[\]])((?:https?:\/\/)[a-z0-9.-]*cibc\.com\/[^\s)\]<>"']+)/gi,
     (m, pre, url) => {
       const fixed = repair(url, "");
       if (fixed === null || fixed === "" || fixed === url) return m;

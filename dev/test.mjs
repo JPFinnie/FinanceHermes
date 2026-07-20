@@ -80,6 +80,7 @@ async function scenarioFullLoop() {
     ok(t.includes("init"), "emits init");
     const init = events.find((e) => e.type === "init");
     ok(init?.model === "Hermes-4-405B-mock" && init?.search === "tavily", "init reports model + tavily search");
+    ok(init?.mode === "research" && init?.tier === 1, "default mode is research (Tier 1)");
     ok(t.includes("step_start"), "emits step_start");
     const thinking = events.filter((e) => e.type === "thinking_delta").map((e) => e.text).join("");
     ok(thinking.includes("search for") || thinking.includes("search first"), "reassembles <think> split across chunks");
@@ -166,11 +167,69 @@ async function scenarioHttpContract() {
   }
 }
 
+async function scenarioLearnMode() {
+  console.log("\nScenario 5: Learn mode (Tier 2) grounded in the CIBC Learn library");
+  const server = await startServer(["--port", "8799", "--upstream", "8800"]);
+  try {
+    const { status, events } = await collectEvents(8799, { query: "What is an ETF?", mode: "learn" });
+    ok(status === 200, "SSE responds 200");
+    const init = events.find((e) => e.type === "init");
+    ok(init?.mode === "learn" && init?.tier === 2, "init reports learn mode (Tier 2)");
+    ok(init?.max_steps === 4, "learn mode runs the shorter loop");
+    const call = events.find((e) => e.type === "tool_call");
+    ok(call?.name === "learn_lookup" && /etf/i.test(call?.args?.query || ""), "model calls learn_lookup");
+    const result = events.find((e) => e.type === "tool_result");
+    ok(result?.ok === true && Array.isArray(result.items) && result.items.length > 0, "library search returns articles");
+    ok(
+      (result?.items || []).every((r) => r.url.startsWith("https://www.investorsedge.cibc.com/en/learn")),
+      "all results are CIBC Learn pages"
+    );
+    ok(/what is an etf/i.test(result?.items?.[0]?.title || ""), "top hit is the ETF explainer");
+    ok(!events.some((e) => e.type === "tool_call" && e.name === "web_search"), "no open web_search in learn mode");
+    const done = events.find((e) => e.type === "done");
+    ok(done?.mode === "learn", "done reports learn mode");
+    ok(/investorsedge\.cibc\.com\/en\/learn/.test(done?.answer || ""), "answer links back to CIBC Learn pages");
+    const badMode = await fetch("http://127.0.0.1:8799/api/agent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: "hi", mode: "vip" }),
+    });
+    ok(badMode.status === 400, "unknown mode → 400");
+  } finally {
+    server.kill();
+  }
+}
+
+async function scenarioPremiumGate() {
+  console.log("\nScenario 6: PREMIUM_ACCESS_CODE gates research (Tier 1)");
+  const server = await startServer(["--port", "8801", "--upstream", "8802"], { PREMIUM_ACCESS_CODE: "sesame" });
+  try {
+    const noCode = await collectEvents(8801, { query: "What is an ETF?", mode: "research" });
+    const init1 = noCode.events.find((e) => e.type === "init");
+    ok(init1?.mode === "learn" && init1?.tier === 2, "research without access code downgrades to learn");
+    ok(
+      noCode.events.some((e) => e.type === "status" && /premium/i.test(e.message || "")),
+      "downgrade explained in a status event"
+    );
+    ok(Boolean(noCode.events.find((e) => e.type === "done")), "downgraded run still answers");
+    const withCode = await collectEvents(8801, { query: "What moved Example Corp today?", mode: "research", access_code: "sesame" });
+    const init2 = withCode.events.find((e) => e.type === "init");
+    ok(init2?.mode === "research" && init2?.tier === 1, "valid access code unlocks research mode");
+    const learnStillFree = await collectEvents(8801, { query: "What is an ETF?", mode: "learn" });
+    const init3 = learnStillFree.events.find((e) => e.type === "init");
+    ok(init3?.mode === "learn", "learn mode needs no access code");
+  } finally {
+    server.kill();
+  }
+}
+
 try {
   await scenarioFullLoop();
   await scenarioInlineToolCall();
   await scenarioNoKeys();
   await scenarioHttpContract();
+  await scenarioLearnMode();
+  await scenarioPremiumGate();
 } catch (err) {
   console.error("\nHarness error:", err);
   failures++;

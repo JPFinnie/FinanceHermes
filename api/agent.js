@@ -24,6 +24,19 @@
 //   init, status, step_start, thinking_delta, content_delta, tool_call,
 //   tool_result, turn_end, done, error.
 // No secrets ever reach the client; keys are read from Vercel env vars only.
+//
+// Two chat modes (POST body {"query": "...", "mode": "research" | "learn"}):
+//   * research — Tier 1 (premium): the full live web-research loop above, plus
+//     learn_lookup over the CIBC Investor's Edge Learn library for "Learn
+//     more" links.
+//   * learn    — Tier 2 (freemium): an educational chatbot grounded in the
+//     CIBC Investor's Edge Learn library (api/learn-library.js). No open web
+//     search; web_extract is restricted to CIBC Learn pages.
+// If PREMIUM_ACCESS_CODE is set, research mode additionally requires a
+// matching "access_code" in the body — the hook where a real Tier 1
+// entitlement check (auth/subscription) belongs. Unset = both modes open.
+
+import { LEARN_LOOKUP_SCHEMA, runLearnLookup, isLearnUrl } from "./learn-library.js";
 
 const NOUS_BASE_URL = "https://inference-api.nousresearch.com/v1";
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
@@ -31,7 +44,11 @@ const NOUS_DEFAULT_MODEL = "nousresearch/hermes-4-405b";
 const OPENROUTER_DEFAULT_MODEL = "nousresearch/hermes-4-405b";
 const TAVILY_DEFAULT_BASE_URL = "https://api.tavily.com";
 
-const MAX_STEPS = 6;
+const MODES = {
+  research: { tier: 1, maxSteps: 6 },
+  // Learn mode is the freemium tier: shorter loop, library-grounded.
+  learn: { tier: 2, maxSteps: 4 },
+};
 // Worst case adds one ~8s wrap-up model call after the deadline check, so
 // keep this comfortably under the 60s function cap.
 const RUN_DEADLINE_MS = 50_000;
@@ -98,7 +115,17 @@ const WEB_EXTRACT_SCHEMA = {
   },
 };
 
-const TOOL_EMOJI = { web_search: "🔍", web_extract: "📄" };
+// Learn-mode variant of web_extract: same wire shape, but scoped to the CIBC
+// Investor's Edge Learn section (enforced server-side in runWebExtract too).
+const LEARN_EXTRACT_SCHEMA = {
+  ...WEB_EXTRACT_SCHEMA,
+  description:
+    "Read the full text of official CIBC Investor's Edge Learn pages (returned as markdown). Only public " +
+    "https://www.investorsedge.cibc.com/en/learn/... URLs are allowed — take them from learn_lookup " +
+    "results. Use this when an article's one-line summary is not enough to answer confidently.",
+};
+
+const TOOL_EMOJI = { web_search: "🔍", web_extract: "📄", learn_lookup: "🎓" };
 
 function resolveProvider(env) {
   if (env.HERMES_BASE_URL && env.HERMES_API_KEY) {
@@ -134,13 +161,44 @@ function resolveProvider(env) {
   return null;
 }
 
-function buildSystemPrompt(env, searchEnabled) {
+function buildSystemPrompt(env, searchEnabled, mode) {
   const today = new Date().toISOString().slice(0, 10);
   const parts = [];
   if (env.HERMES_REASONING === "1") parts.push(HERMES_REASONING_DIRECTIVE);
+
+  if (mode === "learn") {
+    parts.push(
+      "You are Hermes Learn, a friendly investing educator built on Hermes by Nous Research, running in the " +
+        "Learn chatbot (Tier 2, free tier). You teach self-directed investors — many of them beginners — how " +
+        "investing works: products (stocks, ETFs, mutual funds, bonds, GICs, options, structured notes), " +
+        "registered accounts (TFSA, RRSP, RRIF, RESP, FHSA), portfolio strategies, risk management, and the " +
+        "Investor's Edge platform. Explain in plain, encouraging language, define jargon on first use, and " +
+        "use short concrete examples with simple numbers where they help."
+    );
+    parts.push(
+      "Your grounding source is the official CIBC Investor's Edge Learn library. For each question, call " +
+        "learn_lookup first to find the relevant CIBC pages" +
+        (searchEnabled
+          ? ", and use web_extract to read a page in full when its one-line summary is not enough to answer confidently"
+          : "") +
+        ". Base your explanation on what the library covers, attribute the material to CIBC Investor's Edge, " +
+        'and end with a "Keep learning" section linking 1-3 of the most relevant pages as markdown links. If ' +
+        "the library has no relevant page, say so and give a careful general-knowledge explanation instead."
+    );
+    parts.push(
+      "Stay educational. Do not give personalized investment advice or buy/sell recommendations, and do not " +
+        "quote live prices or claim current market data — Learn mode has no live market tools. If the user " +
+        "asks for live research (what moved a stock today, analyst sentiment, breaking macro news), briefly " +
+        "note that Research mode (Tier 1, premium) does live web research with citations, then teach the " +
+        "underlying concept as far as the library allows. Today's date is " + today + "."
+    );
+    return parts.join("\n\n");
+  }
+
   // Identity adapted from Neo agent/prompt_builder.py DEFAULT_AGENT_IDENTITY.
   parts.push(
-    "You are Hermes Research, an intelligent financial-research assistant built on Hermes by Nous Research. " +
+    "You are Hermes Research, an intelligent financial-research assistant built on Hermes by Nous Research, " +
+      "running in Research mode (Tier 1, premium). " +
       "You are helpful, knowledgeable, and direct. You assist investment professionals with market research: " +
       "what moved a stock and why, earnings and filings, analyst sentiment, macro and central-bank commentary, " +
       "and sector developments. You communicate clearly, admit uncertainty when appropriate, and prioritize " +
@@ -162,6 +220,13 @@ function buildSystemPrompt(env, searchEnabled) {
         "that figures may be out of date. Today's date is " + today + "."
     );
   }
+  parts.push(
+    "You also have learn_lookup, a search over the official CIBC Investor's Edge Learn library (~100 " +
+      "educational articles, courses and guides). When your answer leans on a concept the library explains — " +
+      "margin, options strategies, covered call ETFs, registered accounts like TFSAs and RRSPs, dollar-cost " +
+      'averaging, tax-loss selling and so on — call it and close with a short "Learn more" section of 1-3 ' +
+      "relevant CIBC Learn links. Live research stays primary; the library supplements it."
+  );
   parts.push(
     "When you have what you need, produce a clear, well-structured final answer in markdown: a one-paragraph " +
       "takeaway first, then short sections or bullets with specifics (numbers, dates, who said what). Cite web " +
@@ -482,8 +547,21 @@ async function runWebSearch(env, args, signal) {
   };
 }
 
-async function runWebExtract(env, args, signal) {
-  const urls = (Array.isArray(args.urls) ? args.urls : []).filter((u) => /^https?:\/\//i.test(String(u))).slice(0, 3);
+async function runWebExtract(env, args, signal, mode) {
+  let urls = (Array.isArray(args.urls) ? args.urls : []).filter((u) => /^https?:\/\//i.test(String(u))).slice(0, 3);
+  if (mode === "learn") {
+    // Freemium tier reads only the public CIBC Investor's Edge Learn pages.
+    const allowed = urls.filter(isLearnUrl);
+    if (urls.length && !allowed.length) {
+      return {
+        forModel:
+          "Error: in Learn mode web_extract can only read CIBC Investor's Edge Learn pages " +
+          "(https://www.investorsedge.cibc.com/en/learn/...). Use URLs from learn_lookup results.",
+        display: { ok: false, summary: "Learn mode reads CIBC Learn pages only" },
+      };
+    }
+    urls = allowed;
+  }
   if (!urls.length) return { forModel: "Error: no valid http(s) URLs given.", display: { ok: false, summary: "no valid URLs" } };
   const json = await tavilyRequest(env, "extract", { urls }, signal);
   const docs = (json.results || []).map((r) => ({
@@ -503,9 +581,22 @@ async function runWebExtract(env, args, signal) {
   };
 }
 
-async function execTool(env, name, args, signal) {
-  if (name === "web_search") return runWebSearch(env, args, signal);
-  if (name === "web_extract") return runWebExtract(env, args, signal);
+async function execTool(env, name, args, signal, mode, searchEnabled) {
+  // learn_lookup is local (api/learn-library.js) — no keys, no network.
+  if (name === "learn_lookup") return runLearnLookup(args);
+  if (!searchEnabled) {
+    return { forModel: "Error: web tools are not configured.", display: { ok: false, summary: "tools disabled" } };
+  }
+  if (name === "web_search") {
+    if (mode === "learn") {
+      return {
+        forModel: "Error: web_search is not available in Learn mode. Use learn_lookup instead.",
+        display: { ok: false, summary: "not available in Learn mode" },
+      };
+    }
+    return runWebSearch(env, args, signal);
+  }
+  if (name === "web_extract") return runWebExtract(env, args, signal, mode);
   return { forModel: `Error: unknown tool "${name}".`, display: { ok: false, summary: "unknown tool" } };
 }
 
@@ -578,9 +669,30 @@ export default async function handler(req, res) {
     res.end(JSON.stringify({ error: `Provide a non-empty "query" up to ${MAX_QUERY_CHARS} characters.` }));
     return;
   }
+  const requestedMode = body.mode === undefined ? "research" : String(body.mode);
+  if (!MODES[requestedMode]) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: `Unknown "mode" — use ${Object.keys(MODES).map((m) => `"${m}"`).join(" or ")}.` }));
+    return;
+  }
 
   const env = process.env;
   const provider = resolveProvider(env);
+
+  // Tier gate: research is the Tier 1 (premium) mode. When PREMIUM_ACCESS_CODE
+  // is set, a research request must present it or it is served in Learn mode
+  // (Tier 2, freemium) instead. This is where a real subscription/entitlement
+  // check plugs in; with the variable unset (demo default), both modes are open.
+  let mode = requestedMode;
+  let downgraded = false;
+  if (mode === "research" && env.PREMIUM_ACCESS_CODE) {
+    const code = typeof body.access_code === "string" ? body.access_code : "";
+    if (code !== env.PREMIUM_ACCESS_CODE) {
+      mode = "learn";
+      downgraded = true;
+    }
+  }
+  const maxSteps = MODES[mode].maxSteps;
 
   sseStart(res);
   const send = makeSender(res);
@@ -609,25 +721,42 @@ export default async function handler(req, res) {
   }
 
   const searchEnabled = Boolean(env.TAVILY_API_KEY);
-  const tools = searchEnabled ? [WEB_SEARCH_SCHEMA, WEB_EXTRACT_SCHEMA] : [];
+  // learn_lookup is available in both modes and needs no keys; the web tools
+  // depend on Tavily, and Learn mode gets only the CIBC-scoped extract.
+  const tools =
+    mode === "learn"
+      ? [LEARN_LOOKUP_SCHEMA, ...(searchEnabled ? [LEARN_EXTRACT_SCHEMA] : [])]
+      : [...(searchEnabled ? [WEB_SEARCH_SCHEMA, WEB_EXTRACT_SCHEMA] : []), LEARN_LOOKUP_SCHEMA];
 
   send({
     type: "init",
+    mode,
+    tier: MODES[mode].tier,
     model: provider.model,
     provider: provider.name,
     search: searchEnabled ? "tavily" : "disabled",
-    max_steps: MAX_STEPS,
+    max_steps: maxSteps,
   });
+  if (downgraded) {
+    send({
+      type: "status",
+      message:
+        "Research mode is a Tier 1 (premium) feature and this request had no valid access code — answering " +
+        "in Learn mode (Tier 2, free) instead, grounded in the CIBC Investor's Edge Learn library.",
+    });
+  }
   if (!searchEnabled) {
     send({
       type: "status",
       message:
-        "TAVILY_API_KEY is not set — running model-only (no live web search). Answers may not reflect today's data.",
+        mode === "learn"
+          ? "TAVILY_API_KEY is not set — Learn mode will answer from the library index without reading full articles."
+          : "TAVILY_API_KEY is not set — running model-only (no live web search). Answers may not reflect today's data.",
     });
   }
 
   const messages = [
-    { role: "system", content: buildSystemPrompt(env, searchEnabled) },
+    { role: "system", content: buildSystemPrompt(env, searchEnabled, mode) },
     { role: "user", content: query },
   ];
 
@@ -637,7 +766,7 @@ export default async function handler(req, res) {
   let steps = 0;
 
   try {
-    for (let step = 1; step <= MAX_STEPS; step++) {
+    for (let step = 1; step <= maxSteps; step++) {
       steps = step;
       const remaining = deadline - Date.now();
       if (remaining < 4_000) {
@@ -700,11 +829,7 @@ export default async function handler(req, res) {
         let result;
         const tt = timeoutSignal(master.signal, TOOL_CALL_TIMEOUT_MS);
         try {
-          if (!searchEnabled) {
-            result = { forModel: "Error: web tools are not configured.", display: { ok: false, summary: "tools disabled" } };
-          } else {
-            result = await execTool(env, tc.name, args, tt.signal);
-          }
+          result = await execTool(env, tc.name, args, tt.signal, mode, searchEnabled);
         } catch (err) {
           result = {
             forModel: `Error running ${tc.name}: ${clip(err.message, 200)}`,
@@ -742,6 +867,7 @@ export default async function handler(req, res) {
       type: "done",
       answer: finalAnswer,
       steps,
+      mode,
       model: provider.model,
       elapsed_ms: Date.now() - startedAt,
     });

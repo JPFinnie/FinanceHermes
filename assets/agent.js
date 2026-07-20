@@ -12,9 +12,46 @@
   const runbar = $("runbar");
   const runbarText = $("runbar-text");
   const chips = document.querySelectorAll(".chips button");
+  const chipSets = document.querySelectorAll(".chips[data-for-mode]");
+  const modeButtons = document.querySelectorAll(".modes .mode");
+  const modeBlurb = $("mode-blurb");
 
   let controller = null;
   let timerId = 0;
+
+  // ── chat modes (kept in sync with api/agent.js MODES) ─────────────────
+  const MODES = {
+    research: {
+      label: "Research · Tier 1",
+      blurb:
+        "Full live research: the agent searches the web, reads sources, and cites them — " +
+        "with “Learn more” links from the CIBC Investor’s Edge Learn library.",
+      placeholder: "e.g. What moved NVDA today, and what’s the current analyst sentiment?",
+    },
+    learn: {
+      label: "Learn · Tier 2",
+      blurb:
+        "Free educational coach grounded in the CIBC Investor’s Edge Learn library (~100 official " +
+        "articles and guides). Explains investing concepts and links the source pages — no live market data.",
+      placeholder: "e.g. What’s the difference between a TFSA and an RRSP?",
+    },
+  };
+  let mode = "research";
+
+  function setMode(next) {
+    if (!MODES[next] || next === mode) return;
+    mode = next;
+    modeButtons.forEach((b) => {
+      const active = b.dataset.mode === mode;
+      b.classList.toggle("active", active);
+      b.setAttribute("aria-checked", String(active));
+    });
+    chipSets.forEach((set) => (set.hidden = set.dataset.forMode !== mode));
+    modeBlurb.textContent = MODES[mode].blurb;
+    input.placeholder = MODES[mode].placeholder;
+  }
+
+  modeButtons.forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
 
   // ── tiny XSS-safe markdown renderer for the final answer ──────────────
   const escapeHtml = (s) =>
@@ -175,7 +212,14 @@
   function handleEvent(ev) {
     switch (ev.type) {
       case "init": {
-        run.meta = `${ev.model} · ${ev.provider}${ev.search === "tavily" ? " · live web search" : " · no web search"}`;
+        const modeLabel = MODES[ev.mode]?.label || MODES.research.label;
+        const sourceLabel =
+          ev.mode === "learn"
+            ? "CIBC Learn library"
+            : ev.search === "tavily"
+              ? "live web search"
+              : "no web search";
+        run.meta = `${modeLabel} · ${ev.model} · ${ev.provider} · ${sourceLabel}`;
         setRunbar("running", `${run.meta} · working`);
         break;
       }
@@ -226,7 +270,7 @@
         const spin = el("span", "spin");
         head.appendChild(spin);
         const argText =
-          ev.name === "web_search"
+          ev.name === "web_search" || ev.name === "learn_lookup"
             ? `“${ev.args?.query || ""}”`
             : Array.isArray(ev.args?.urls)
               ? ev.args.urls.join("  ")
@@ -328,7 +372,7 @@
       const resp = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, mode }),
         signal: controller.signal,
       });
 

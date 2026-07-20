@@ -1,0 +1,364 @@
+// api/learn-library.js — curated index of the CIBC Investor's Edge Learn library.
+//
+// This is an INDEX, not a copy: each entry carries the official page title, the
+// public URL on investorsedge.cibc.com, and the page's own one-line meta
+// description. The article content itself stays on CIBC's site — the agent
+// links to it (and, in Learn mode, may read a page live via web_extract) and
+// always attributes it. Catalogued from https://www.investorsedge.cibc.com/en/learn.html
+// and the site's sitemap (English pages), July 2026. To refresh, re-crawl the
+// sitemap for /en/learn URLs and regenerate the entries below.
+//
+// Used by api/agent.js in both chat modes:
+//   * Research mode (Tier 1, premium)  — learn_lookup supplements live web
+//     research with "Learn more" links to relevant CIBC explainers.
+//   * Learn mode (Tier 2, freemium)    — learn_lookup is the primary grounding
+//     source; the educational chatbot answers from this library and links out.
+
+const LEARN_BASE_URL = "https://www.investorsedge.cibc.com";
+
+const E = (category, title, path, summary) => ({
+  category,
+  title,
+  url: LEARN_BASE_URL + path,
+  summary,
+});
+
+export const LEARN_LIBRARY = [
+
+  // ── Getting started ─────────────────────────────────────────────────────
+  E("Getting started", "How to Start Investing When You're New to Canada", "/en/learn/investing-basics-when-new-to-canada.html",
+    "Learn the basics so you can begin building your financial future in your new home."),
+  E("Getting started", "Investing 101", "/en/learn/investing-101.html",
+    "Whether you're new to investing or want to expand your knowledge, this course is for you."),
+  E("Getting started", "Investment Insights", "/en/learn/investing.html",
+    "Learn about different investment products and strategies to help you build your portfolio."),
+  E("Getting started", "Learning Resources", "/en/learn.html",
+    "Explore our helpful how-to guides and trading tutorials, and keep up with the latest market research and investment trends."),
+
+  // ── Stocks ──────────────────────────────────────────────────────────────
+  E("Stocks", "Buy and Hold: Is It a Good Strategy?", "/en/learn/investing/stocks/buy-and-hold-strategy.html",
+    "Compounding doesn't just grow your wealth — it reshapes your portfolio over time. Explore how buy and hold investing works, its challenges and what to watch for."),
+  E("Stocks", "Dividend stocks: What they are and how they work", "/en/learn/investing/stocks/what-are-dividends-how-they-work.html",
+    "Discover how stock dividends work and why investing in them can enhance portfolio growth. Explore the benefits of dividend stocks and their impact on returns."),
+  E("Stocks", "Find Great Stocks Using Trade Ideas", "/en/learn/investing/stocks/find-stocks-using-trade-ideas.html",
+    "Looking to enhance your investment strategy? Learn how Trade Ideas on the Investor's Edge platform can help you identify stocks that are right for you."),
+  E("Stocks", "How Analyst Reports Can Help Your Investments", "/en/learn/investing/stocks/analyst-reports-investing.html",
+    "Analyst reports provide insights into market trends and investment opportunities. Learn how these reports can support your investment decisions."),
+  E("Stocks", "Investing in IPOs: A Beginner's Guide", "/en/learn/investing/stocks/investing-in-ipos-guide.html",
+    "What is IPO investing? Learn the basics, including risks and tips, to help you decide if IPOs are the right choice for your portfolio."),
+  E("Stocks", "Learn About Stocks", "/en/learn/investing/stocks.html",
+    "Learn about stocks, one of the most common investments. When you invest in a stock, you own part of a company and can share in its success."),
+  E("Stocks", "Margin Trading: How Does It Work?", "/en/learn/investing/stocks/how-margin-trading-works.html",
+    "Understand the concept of margin trading, how it works, and the benefits and risks associated with it."),
+  E("Stocks", "Precious Metals 101: Gold, Silver & Platinum Guide", "/en/learn/investing/stocks/precious-metals-101.html",
+    "Gold, silver and platinum each offer unique investment opportunities and risks. Explore how these metals compare and how to add them to your portfolio."),
+  E("Stocks", "Short Selling Part 1: The Basics", "/en/learn/investing/stocks/short-selling-part-1-the-basics.html",
+    "When stocks are dropping, you might have the option of short selling. Watch this video to learn more about what it is and what it can do for you."),
+  E("Stocks", "Short Selling Part 2: Calculating Risk", "/en/learn/investing/stocks/short-selling-part-2-calculating-risk.html",
+    "To sell or not to sell? That is the question! In this video, we show you how to calculate a profit or loss on a short sale, and what risks to keep in mind."),
+  E("Stocks", "Staying Disciplined in Volatile Markets", "/en/learn/investing/stocks/staying-disciplined-volatile-markets.html",
+    "Mark Herzog, Head of Institutional Equities at CIBC Capital Markets, shares insights on maintaining trading discipline during market volatility."),
+  E("Stocks", "Top 10 Most-Traded Stocks and ETFs", "/en/learn/investing/stocks/top-traded-stocks.html",
+    "See what stocks and ETFs Investor's Edge clients were buying and selling last month."),
+  E("Stocks", "Trade Up with Advanced Technology", "/en/learn/investing/stocks/trade-up-with-advanced-technology.html",
+    "Your Canadian equity orders have a unique advantage when you trade with Investor's Edge. Benefit from advanced trading technology and CIBC Capital Markets' expertise."),
+  E("Stocks", "What is a Canadian Depositary Receipt (CDR)?", "/en/learn/investing/stocks/what-is-canadian-depositary-receipt.html",
+    "CDRs provide exposure to global companies trading in Canadian dollars on a Canadian stock exchange."),
+  E("Stocks", "Why a Good Investor Can Be a Bad Trader", "/en/learn/investing/stocks/good-investor-bad-trader.html",
+    "Learn how trading and investing require different strategies and mindsets, shaping how investors and traders make decisions in the stock market."),
+  E("Stocks", "Will AI Disrupt Investment Moats?", "/en/learn/investing/stocks/will-ai-disrupt-investment-moats.html",
+    "Will AI make today's investment moats obsolete? See how durable advantages, adapters, and overlooked sectors shape smart investing in an AI-driven world."),
+
+  // ── ETFs & mutual funds ─────────────────────────────────────────────────
+  E("ETFs & mutual funds", "Covered Call ETFs: Benefits & Risks", "/en/learn/investing/etfs-and-mutual-funds/covered-call-etfs.html",
+    "Covered call ETFs involve unique trade-offs and challenges. Explore a deeper dive into risks, portfolio impact, and when to consider these strategies."),
+  E("ETFs & mutual funds", "ETFs and Mutual Funds", "/en/learn/investing/etfs-and-mutual-funds.html",
+    "Learn about exchange traded funds (ETFs) and mutual funds – two easy ways to invest and diversify your portfolio."),
+  E("ETFs & mutual funds", "What Is an ETF and How Does It Work?", "/en/learn/investing/etfs-and-mutual-funds/what-is-an-etf.html",
+    "An ETF is a professionally managed fund that holds stocks or bonds and trades on exchanges, offering broad market exposure."),
+
+  // ── Fixed income ────────────────────────────────────────────────────────
+  E("Fixed income", "Beginner's Guide to Bond Investing", "/en/learn/investing/fixed-income/bond-investing-guide.html",
+    "Bonds are one of the most common types of fixed income investments, available in various forms for investors. Explore how bonds provide stability and income."),
+  E("Fixed income", "Learn About Fixed Income Securities", "/en/learn/investing/fixed-income.html",
+    "Fixed income securities pay a fixed level of income for a defined period of time. Learn about fixed income and the reasons they appeal to investors."),
+  E("Fixed income", "What Is a Guaranteed Investment Certificate (GIC)", "/en/learn/investing/fixed-income/what-is-a-guaranteed-investment-certificate.html",
+    "Learn what a Guaranteed Investment Certificate (GIC) is, how it works, its advantages and disadvantages, and determine whether it is right for you."),
+
+  // ── Options ─────────────────────────────────────────────────────────────
+  E("Options", "Learn About Options", "/en/learn/investing/options.html",
+    "Learn about options. They can be part of sophisticated strategies for experienced investors to help lock in market gains, protect against loss or generate income."),
+  E("Options", "Option strategies overview", "/en/learn/investing/options/option-strategies-overview.html",
+    "Learn about various options strategies, how and why they are used and the risks associated with each type."),
+  E("Options", "Your Guide to Trading CDR Options", "/en/learn/investing/options/trading-cdr-options.html",
+    "Options on Canadian Depositary Receipts (CDRs) increase trading flexibility. Understand the benefits and risks to see if they fit your investment goals."),
+
+  // ── Options course ──────────────────────────────────────────────────────
+  E("Options course", "How to Trade Options", "/en/learn/options-trading-course.html",
+    "In this 15-part course, learn how to use options to tailor your portfolio and meet your investing goals."),
+  E("Options course", "The risks of buying options", "/en/learn/options-trading-course/options-buying-risks.html",
+    "While there are advantages to trading options, there are also some important risks that you'll want to understand up front."),
+
+  // ── Portfolio strategies ────────────────────────────────────────────────
+  E("Portfolio strategies", "10 Habits of Highly Effective Investors: Part 2", "/en/learn/investing/portfolio-strategies/10-habits-highly-effective-investors-part-2.html",
+    "Discover how research, diverse opinions and investment analysis help investors make informed decisions and avoid pitfalls."),
+  E("Portfolio strategies", "10 Habits of Highly Effective Investors: Part 3", "/en/learn/investing/portfolio-strategies/10-habits-highly-effective-investors-part-3.html",
+    "Learn how probability, psychology and history help investors avoid biases, improve decisions and achieve better investment results."),
+  E("Portfolio strategies", "2 Ways to Rebalance Your Portfolio", "/en/learn/investing/portfolio-strategies/rebalance-portfolio.html",
+    "Portfolio rebalancing involves time-based and asset-weighted strategies. Learn when to avoid rebalancing high-flying stocks to maintain target asset allocation."),
+  E("Portfolio strategies", "3 Options Strategies for Earnings Season", "/en/learn/investing/portfolio-strategies/3-options-strategies-earnings-season.html",
+    "Bullish or bearish about earnings? Discover three options strategies to adjust your stock exposure and manage risks effectively during earnings season."),
+  E("Portfolio strategies", "3 Ways to Seek Safety in Investing", "/en/learn/investing/portfolio-strategies/seeking-safety.html",
+    "Do you sometimes play it safe? Explore some of the ways investors seek safety in the markets - holding cash, focusing on yield and favouring Canada."),
+  E("Portfolio strategies", "4 Investor Questions to Consider in 2026", "/en/learn/investing/portfolio-strategies/4-key-investor-questions-2026.html",
+    "Explore 4 key questions for investors in 2026, covering economic outlook, AI stock trends, US dollar direction, and market indicators for smarter decisions."),
+  E("Portfolio strategies", "4 Relationship Behaviors That Impact Investors", "/en/learn/investing/portfolio-strategies/relationship-behaviours-impact-investors.html",
+    "Love your investments? They might not always love you back. Explore four relationship-like behaviors that can influence your investment decisions."),
+  E("Portfolio strategies", "5 Investing Insights from Charlie Munger", "/en/learn/investing/portfolio-strategies/investing-insights-charlie-munger.html",
+    "What can Charlie Munger's famous \"Mungerisms\" teach us about investing? Explore five of his famous remarks and see if they change how you think about investing."),
+  E("Portfolio strategies", "5 Key Investment Considerations for 2025", "/en/learn/investing/portfolio-strategies/5-investment-considerations-2025.html",
+    "Investors never know what to expect from markets, especially in the year ahead. We highlight five things for investors to ponder for 2025."),
+  E("Portfolio strategies", "5 Ways to Invest in AI", "/en/learn/investing/portfolio-strategies/five-ways-to-invest-in-ai.html",
+    "Artificial Intelligence (AI) has exploded in popularity since ChatGPT's launch. Explore five ways investors can invest in different kinds of AI companies."),
+  E("Portfolio strategies", "Are US Stocks Expensive?", "/en/learn/investing/portfolio-strategies/are-us-stocks-expensive.html",
+    "The US stock market has seen long-term growth, raising valuation concerns. Explore how to assess US stock value and manage exposure with key strategies."),
+  E("Portfolio strategies", "Beginner's Guide to Evaluating Investment Advice", "/en/learn/investing/portfolio-strategies/evaluating-investment-advice-guide.html",
+    "A simple guide to knowing who you can really trust when starting to invest. Explore how to evaluate investment advice, spot red flags, and make smart decisions."),
+  E("Portfolio strategies", "Buying the Dip: Managing the Trade", "/en/learn/investing/portfolio-strategies/buying-the-dip.html",
+    "Buying the dip takes planning and discipline for successful trades. Explore how to create a trading plan, set buy zones, and manage risk with reversals."),
+  E("Portfolio strategies", "EV: Is It Worth the Investment?", "/en/learn/investing/portfolio-strategies/ev-worth-investment.html",
+    "Learn about global demand for electric vehicles, obstacles to consumer adoption and investment opportunities in the electric vehicle industry."),
+  E("Portfolio strategies", "Exploring Health Care in Canada and the U.S.", "/en/learn/investing/portfolio-strategies/exploring-health-care.html",
+    "The health care sector is a small part of the Canadian market, while it plays a larger role in the U.S. Learn how these differences impact investment strategies."),
+  E("Portfolio strategies", "From Home Ownership to Real Estate Funds", "/en/learn/investing/portfolio-strategies/home-ownership-real-estate-funds.html",
+    "Real estate drives Canadian wealth, from homes to funds and REITs. Explore how to compare ownership, rentals and funds to build a balanced investment portfolio."),
+  E("Portfolio strategies", "Gain an Edge by Trading Meme Stocks", "/en/learn/investing/portfolio-strategies/trading-meme-stocks.html",
+    "Looking for a new trading strategy? Learn how to identify short squeezes and gain an edge by trading meme stocks."),
+  E("Portfolio strategies", "How Does the Economy Affect Your Money?", "/en/learn/investing/portfolio-strategies/how-the-economy-affects-you.html",
+    "Watch as Benjamin Tal explains how the economy, including trends like inflation and uncertainty, impacts your money and shapes financial decisions."),
+  E("Portfolio strategies", "How Inflation Affects Your Investments", "/en/learn/investing/portfolio-strategies/how-inflation-affects-your-investments.html",
+    "Inflation can affect investments, from short-term savings to retirement plans. Learn how to adapt your investment strategies to manage rising costs and interest rates."),
+  E("Portfolio strategies", "How Interest Rates Affect Your Investments", "/en/learn/investing/portfolio-strategies/how-interest-rates-affect-investments.html",
+    "Interest rates rise and fall for many reasons and can impact your investments. Explore how shifting rates affect stocks, bonds, and your portfolio."),
+  E("Portfolio strategies", "How Long Do Stock Bull Markets Last?", "/en/learn/investing/portfolio-strategies/how-long-do-bull-markets-last.html",
+    "Bull markets in stocks often last for years, but interest rates play a key role in their duration. Explore how market cycles and strategies impact your investments."),
+  E("Portfolio strategies", "How the Fed's Decision on Rates Could Affect Your Portfolio", "/en/learn/investing/portfolio-strategies/federal-reserve-rate-decision-affect-portfolio.html",
+    "Why the market is expecting rates to be on hold, what could push the Fed from hold to cutting or hiking rates and why investors should likely not bank on any particular Fed move."),
+  E("Portfolio strategies", "How to Invest for a 100-Year Life", "/en/learn/investing/portfolio-strategies/how-to-invest-100-year-life.html",
+    "What if living to 100 wasn't a miracle, but just the new normal? Explore how a longer life is changing investing, opportunity and how to stay resilient for the future."),
+  E("Portfolio strategies", "How to Manage Foreign Currency in Your Portfolio", "/en/learn/investing/portfolio-strategies/manage-foreign-currency-portfolio.html",
+    "Foreign currency exposure can affect your portfolio's risk and return. Learn how to manage it across global stocks, bonds, and other investments."),
+  E("Portfolio strategies", "How to Read an Earnings Report", "/en/learn/investing/portfolio-strategies/read-earnings-report.html",
+    "Earnings up, share price down? Understand how to analyze earnings reports, including revenue, EPS, and guidance, to make informed investment decisions."),
+  E("Portfolio strategies", "How to Start Investing Young", "/en/learn/investing/portfolio-strategies/how-to-start-investing-young.html",
+    "Starting to invest at a young age helps you get into the responsible habit of saving and setting aside money for your future."),
+  E("Portfolio strategies", "How to Stay Calm in a Volatile Market", "/en/learn/investing/portfolio-strategies/staying-calm-in-volatile-markets.html",
+    "Here's how to handle the tough psychology of volatile markets. Create a plan, stay focused and tune out the news cycle noise during periods of market volatility."),
+  E("Portfolio strategies", "How to Use AI in Your Investing Strategy", "/en/learn/investing/portfolio-strategies/using-ai-investing-strategy.html",
+    "Chris Patterson, Head of AI Solutions at CIBC, shares how to use AI in investing, what it's great at, where it can go wrong, and prompts anyone can try."),
+  E("Portfolio strategies", "Invest in Real Estate Without Owning", "/en/learn/investing/portfolio-strategies/invest-real-estate.html",
+    "Learn different strategies on how to invest in real estate without owning it, such as REITs, structured notes and other investments."),
+  E("Portfolio strategies", "Investing in Bitcoin: Benefits and Risks", "/en/learn/investing/portfolio-strategies/investing-bitcoin-benefits-risks.html",
+    "Is Bitcoin a good investment? Learn about the benefits and risks of investing in Bitcoin and how it can diversify your portfolio."),
+  E("Portfolio strategies", "Investor Behavior: Chasing Performance", "/en/learn/investing/portfolio-strategies/chasing-performance.html",
+    "Chasing performance involves buying an investment after strong gains and eventually selling it at a loss. Learn why this happens and how to deal with it."),
+  E("Portfolio strategies", "Longevity Investing: Planning for a Longer Life", "/en/learn/investing/portfolio-strategies/longevity-investing-100-year-life.html",
+    "Living longer changes how you approach investing and retirement. Explore practical ways to shift your portfolio, withdrawal strategies and ideas for long-term planning."),
+  E("Portfolio strategies", "Longevity Investing: Sectors and Trends to Watch", "/en/learn/investing/portfolio-strategies/longevity-investing-sectors-trends.html",
+    "Longer lives are changing how we invest and retire. Explore how longevity trends and key sectors create new opportunities for investors in today's market."),
+  E("Portfolio strategies", "Part 3 — Trade Risk Management: Risk Before Reward", "/en/learn/investing/portfolio-strategies/part-3-trade-risk-management.html",
+    "When you invest, do you think more about risk or reward? In this article, we make the case for why you should focus on risk before reward. Learn more."),
+  E("Portfolio strategies", "Portfolio Strategies", "/en/learn/investing/portfolio-strategies.html",
+    "Learn about different approaches to investing."),
+  E("Portfolio strategies", "Prediction Markets: Investing or Betting?", "/en/learn/investing/portfolio-strategies/prediction-markets-investing-or-betting.html",
+    "Learn why prediction markets are much closer to betting than investing, based on time horizon, risk/reward exposure and expected value."),
+  E("Portfolio strategies", "Private Credit: Benefits & Risks", "/en/learn/investing/portfolio-strategies/private-credit-benefits-risks.html",
+    "Private credit offers higher yields and diversification but comes with unique risks and limited track record. Explore how this asset class may fit your portfolio."),
+  E("Portfolio strategies", "Quantitative Easing vs. Tightening: Impact on Stocks", "/en/learn/investing/portfolio-strategies/quantitative-easing-vs-tightening.html",
+    "Follow the money. Learn how central bank liquidity and QE affect stock prices, tech investments, and your portfolio strategy."),
+  E("Portfolio strategies", "Rebound Trades: Risks for Investors", "/en/learn/investing/portfolio-strategies/rebound-trades.html",
+    "Rebound trades can pose risks for investors. Understand the implications of revenge trading and doubling down to safeguard your investments."),
+  E("Portfolio strategies", "REITs Explained: Investor Insights", "/en/learn/investing/portfolio-strategies/reits-explained.html",
+    "REITs make real estate investing accessible without direct ownership. Learn how to evaluate REITs using cap rates, yields, debt, and diversification strategies."),
+  E("Portfolio strategies", "REITS, Real Estate ETFs and Mutual Funds", "/en/learn/investing/portfolio-strategies/reits-real-estate-etfs-mutual-funds.html",
+    "Gain exposure to real estate without owning property through REITs, ETFs, and mutual funds. Explore how these options can diversify your portfolio and manage risk."),
+  E("Portfolio strategies", "RESP Target Date Funds for Education Investing", "/en/learn/investing/portfolio-strategies/resp-target-date-funds.html",
+    "RESP target date funds offer a simple, automated way to invest for education. Explore how these funds adjust over time to help you reach your education goals."),
+  E("Portfolio strategies", "Tax-Loss Selling Overview", "/en/learn/investing/portfolio-strategies/tax-loss-selling-overview.html",
+    "Tax-loss selling is about deliberately selling \"losing\" investments to realize capital losses in taxable accounts. Learn how tax selling works and its benefits."),
+  E("Portfolio strategies", "The $1T IPO: What It Means for Index ETFs", "/en/learn/investing/portfolio-strategies/1-trillion-ipo-what-it-means.html",
+    "Learn how historic $1T IPOs like SpaceX and OpenAI will reshape stock indexes and index ETFs, impacting investors."),
+  E("Portfolio strategies", "The Legend of Investing in IPOs", "/en/learn/investing/portfolio-strategies/legend-of-investing-in-ipos.html",
+    "Considering an IPO? Learn about IPO investment results, trends linked to stronger offerings, and strategies for successful investing."),
+  E("Portfolio strategies", "Total Wealth vs. Investment Wealth", "/en/learn/investing/portfolio-strategies/total-wealth-vs-investment-wealth.html",
+    "Total wealth or investment wealth? Understand how to manage your portfolio effectively by considering total wealth from careers, pensions and real estate."),
+  E("Portfolio strategies", "Trade Risk Management, Part 1: Position Sizing", "/en/learn/investing/portfolio-strategies/position-sizing.html",
+    "Explore what position sizing is and learn strategies to balance your risk, reward and effort as part of your trading strategy through helpful examples."),
+  E("Portfolio strategies", "Trade Risk Management, Part 2: Entries & Exits", "/en/learn/investing/portfolio-strategies/trade-risk-management-part-2.html",
+    "Are you better at buying or selling? Learn how to manage entries and exits, in part two of our series on trade risk management."),
+  E("Portfolio strategies", "Understanding Non-Qualified Investments", "/en/learn/investing/portfolio-strategies/understanding-non-qualified-investments.html",
+    "Learn about the tax implications of non-qualified investments."),
+  E("Portfolio strategies", "What is Dollar Cost Averaging?", "/en/learn/investing/portfolio-strategies/what-is-dollar-cost-averaging.html",
+    "This strategy can help lower the average cost of your investments."),
+  E("Portfolio strategies", "What is Quadruple Witching in the Stock Market?", "/en/learn/investing/portfolio-strategies/what-is-quadruple-witching.html",
+    "Quadruple witching is when four US equity derivatives expire, creating volatility. Explore how this event impacts markets and how investors can prepare."),
+  E("Portfolio strategies", "What Is the VIX?", "/en/learn/investing/portfolio-strategies/what-is-the-vix.html",
+    "Learn what the VIX or the Chicago Board Options Exchange Volatility Index is, how it's calculated, and why it is important for you to know as an investor."),
+  E("Portfolio strategies", "What to Consider When Investing in AI", "/en/learn/investing/portfolio-strategies/investing-in-ai-considerations.html",
+    "Artificial intelligence has gone mainstream. Learn the key factors for a successful AI investment and discover how they differ from other technology investments."),
+  E("Portfolio strategies", "Why the Stock Market Shrank in USA and Canada", "/en/learn/investing/portfolio-strategies/why-stock-markets-are-shrinking.html",
+    "In this article, we explore why the stock market shrank and have become less diverse and more expensive, while high-growth companies may not even go public at all."),
+  E("Portfolio strategies", "Why You Should Learn to Overcome Familiarity Bias", "/en/learn/investing/portfolio-strategies/overcome-familiarity-bias.html",
+    "Investing in companies that you know might feel safe but comes with its own risks. Learn how to break familiarity bias and decide if a stock is right for you."),
+
+  // ── Structured notes ────────────────────────────────────────────────────
+  E("Structured notes", "Diversify with Structured Notes", "/en/learn/investing/structured-notes/ways-to-diversify.html",
+    "Learn what structured notes are and how they can lower your risk. Perfect for those who want exposure to the markets, but fear the risks that come with it."),
+  E("Structured notes", "Learn About Structured Notes", "/en/learn/investing/structured-notes.html",
+    "Learn about structured notes, which are linked to a wide variety of asset classes and can provide an opportunity to create a well-diversified portfolio."),
+
+  // ── Accounts ────────────────────────────────────────────────────────────
+  E("Accounts", "Everything You Need to Know About RESPs", "/en/learn/investing/accounts/everything-to-know-about-resp.html",
+    "Saving for your child's education? Learn how a Registered Education Savings Plan (RESP) at CIBC can help pay for their post-secondary education."),
+  E("Accounts", "First Home Savings Account: FHSA Tax-Free Benefits", "/en/learn/investing/accounts/fhsa-benefits.html",
+    "The FHSA offers Canadians tax-free growth and withdrawals for first home purchases. Explore how to maximize contributions, tax benefits, and combine with RRSP HBP."),
+  E("Accounts", "Learn About Accounts", "/en/learn/investing/accounts.html",
+    "Learn about the different Investor's Edge account types and explore how to select the right account for your investing needs."),
+  E("Accounts", "RRSP Benefits and Tax Advantages Explained", "/en/learn/investing/accounts/rrsp-benefits.html",
+    "A Registered Retirement Savings Plan helps Canadians save for their future with tax benefits and investment options. Explore how an RRSP can support your future."),
+  E("Accounts", "What Is a TFSA and How Does It Work?", "/en/learn/investing/accounts/what-is-tfsa.html",
+    "Take control of your financial future with a self-directed TFSA — Learn how it works, what you can invest in, and how to open one for yourself."),
+  E("Accounts", "What to Consider When Transferring RRSP to RRIF", "/en/learn/investing/accounts/transferring-rrsp-to-rrif.html",
+    "Getting ready to retire? Explore what to consider about withdrawals, taxes, and your benefits when transferring your RRSP to a RRIF."),
+
+  // ── Platform guides ─────────────────────────────────────────────────────
+  E("Platform guides", "Explore All Investor's Edge Guides", "/en/learn/trading-with-investors-edge/all-guides.html",
+    "Browse our full library of guides, tutorials and videos to help you reach your financial goals."),
+  E("Platform guides", "Extended Hours Trading", "/en/learn/trading-with-investors-edge/extended-hours-trading.html",
+    "Extended hours trading on eligible U.S. exchanges is available at Investor's Edge. Understand some of the risks and benefits of trading in extended hours."),
+  E("Platform guides", "Foreign Exchange Explained", "/en/learn/trading-with-investors-edge/foreign-exchange-explained.html",
+    "Learn about foreign exchange, currency risk and the ways to minimize it."),
+  E("Platform guides", "How to Hold USD and Avoid Conversion Fees", "/en/learn/trading-with-investors-edge/holding-usd-avoiding-conversion-fees.html",
+    "A dual-currency account simplifies U.S. dollar investing and reduces costs. Explore how to avoid conversion fees and maximize your U.S. investments."),
+  E("Platform guides", "Margin Trading 101: Risks & Benefits", "/en/learn/trading-with-investors-edge/margin-trading-101.html",
+    "Margin trading can leverage your investments and increase potential returns. But there are risks as well as benefits. Find out more."),
+  E("Platform guides", "Trading With Investor's Edge", "/en/learn/trading-with-investors-edge.html",
+    "Get tips, tutorials and how-to videos on using the Investor's Edge platform so you can build and manage your portfolio with confidence."),
+];
+
+export const LEARN_CATEGORIES = [...new Set(LEARN_LIBRARY.map((e) => e.category))];
+
+// True for URLs the Learn-mode web_extract tool is allowed to read: the
+// public CIBC Investor's Edge Learn section only.
+export function isLearnUrl(url) {
+  return /^https:\/\/(www\.)?investorsedge\.cibc\.com\/en\/learn(\.html$|\/)/i.test(String(url || "").trim());
+}
+
+// Tool schema, same shape as the web tool schemas in api/agent.js.
+export const LEARN_LOOKUP_SCHEMA = {
+  name: "learn_lookup",
+  description:
+    "Search the CIBC Investor's Edge Learn library — a curated index of about 100 official CIBC " +
+    "educational articles, videos, courses and guides covering: investing basics, stocks, dividends, " +
+    "short selling, IPOs, ETFs and mutual funds, fixed income (bonds, GICs), options and options " +
+    "strategies, portfolio strategies (diversification, rebalancing, dollar-cost averaging, risk " +
+    "management, behavioural biases), structured notes, registered accounts (TFSA, RRSP, RRIF, RESP, " +
+    "FHSA), margin, foreign exchange, and the Investor's Edge platform. Returns matching pages with " +
+    "title, category, official URL and a one-line summary. Use it to ground educational answers and " +
+    "to offer 'Learn more' links.",
+  parameters: {
+    type: "object",
+    properties: {
+      query: {
+        type: "string",
+        description: "Topic keywords to look up, e.g. \"covered call ETF risks\" or \"TFSA vs RRSP\".",
+      },
+      limit: {
+        type: "integer",
+        description: "Maximum number of articles to return. Defaults to 5.",
+        minimum: 1,
+        maximum: 8,
+        default: 5,
+      },
+    },
+    required: ["query"],
+  },
+};
+
+const STOPWORDS = new Set(
+  ("a an and are as at be but by can do does explain explained for from how i in is it its learn " +
+    "learning me my of on or she he that the their there they this to versus vs was we what when " +
+    "where which who why will with work works you your").split(" ")
+);
+
+const tokenize = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9$%.-]+/g, " ")
+    .split(/\s+/)
+    .map((t) => t.replace(/^[.-]+|[.-]+$/g, ""))
+    .filter((t) => t.length > 1 && !STOPWORDS.has(t));
+
+// Light stemmer so "dividends" matches "dividend", "investing" ~ "invest".
+const stem = (t) => t.replace(/(ing|ings|ers|er|ies|es|s)$/,"").replace(/ie$/, "y") || t;
+
+// Rank library entries against free-text keywords. Scoring is intentionally
+// simple (title > summary > category/url token hits, plus a phrase bonus) —
+// the library is ~100 entries, so exhaustive scoring is instant.
+export function searchLearnLibrary(query, limit = 5) {
+  const qTokens = [...new Set(tokenize(query).map(stem))];
+  if (!qTokens.length) return [];
+  const phrase = String(query || "").trim().toLowerCase();
+  const scored = [];
+  for (const entry of LEARN_LIBRARY) {
+    const title = entry.title.toLowerCase();
+    const summary = entry.summary.toLowerCase();
+    const titleTokens = new Set(tokenize(entry.title).map(stem));
+    const summaryTokens = new Set(tokenize(entry.summary).map(stem));
+    const otherTokens = new Set(tokenize(entry.category + " " + entry.url).map(stem));
+    let score = 0;
+    for (const t of qTokens) {
+      if (titleTokens.has(t)) score += 4;
+      else if (summaryTokens.has(t)) score += 2;
+      else if (otherTokens.has(t)) score += 1;
+    }
+    if (phrase.length >= 6 && (title.includes(phrase) || summary.includes(phrase))) score += 6;
+    if (score > 0) scored.push({ entry, score });
+  }
+  scored.sort((a, b) => b.score - a.score || a.entry.title.localeCompare(b.entry.title));
+  const max = Math.min(Math.max(parseInt(limit, 10) || 5, 1), 8);
+  return scored.slice(0, max).map(({ entry }) => entry);
+}
+
+// Execute a learn_lookup tool call; returns the same { forModel, display }
+// shape the web tools in api/agent.js produce.
+export function runLearnLookup(args) {
+  const query = String(args?.query || "").slice(0, 300);
+  if (!query.trim()) {
+    return { forModel: "Error: empty learn_lookup query.", display: { ok: false, summary: "empty query" } };
+  }
+  const hits = searchLearnLibrary(query, args?.limit);
+  if (!hits.length) {
+    return {
+      forModel:
+        `No CIBC Learn library pages matched "${query}". Try broader keywords (e.g. the product or ` +
+        "account type name), or answer from general knowledge and say the library has no dedicated page.",
+      display: { ok: true, summary: "no matches", items: [] },
+    };
+  }
+  const forModel =
+    `CIBC Investor's Edge Learn library matches for "${query}":\n\n` +
+    hits
+      .map((h, i) => `${i + 1}. ${h.title} [${h.category}]\n   ${h.url}\n   ${h.summary}`)
+      .join("\n\n") +
+    "\n\nThese are official CIBC Investor's Edge educational pages. Ground your explanation in them, " +
+    "attribute them, and link the most relevant ones in a closing \"Keep learning\" section.";
+  return {
+    forModel,
+    display: {
+      ok: true,
+      summary: `${hits.length} article${hits.length === 1 ? "" : "s"}`,
+      items: hits.map((h) => ({ title: h.title, url: h.url, snippet: h.summary })),
+    },
+  };
+}

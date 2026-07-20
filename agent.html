@@ -28,11 +28,29 @@
       <p class="lede">
         Ask a market question. A <strong>Hermes model from Nous Research</strong> plans the research,
         calls a live web-search tool, reads what it finds, and synthesizes an answer —
-        every step streamed below as it happens. Nothing is canned.
+        every step streamed below as it happens. Nothing is canned. Or switch to
+        <strong>Learn</strong> mode for a free educational coach grounded in the
+        <a href="https://www.investorsedge.cibc.com/en/learn.html" target="_blank" rel="noopener noreferrer">CIBC
+        Investor’s Edge Learn library</a>.
       </p>
     </header>
 
     <main>
+      <div class="modes" role="radiogroup" aria-label="Chatbot mode">
+        <button type="button" class="mode active" data-mode="research" role="radio" aria-checked="true">
+          <span class="mode-name">Research</span>
+          <span class="mode-tier">Tier 1 · Premium</span>
+        </button>
+        <button type="button" class="mode" data-mode="learn" role="radio" aria-checked="false">
+          <span class="mode-name">Learn</span>
+          <span class="mode-tier">Tier 2 · Free</span>
+        </button>
+      </div>
+      <p id="mode-blurb" class="mode-blurb">
+        Full live research: the agent searches the web, reads sources, and cites them —
+        with “Learn more” links from the CIBC Investor’s Edge Learn library.
+      </p>
+
       <form id="composer" class="composer" autocomplete="off">
         <input id="query" name="query" type="text" maxlength="2000" required
                placeholder="e.g. What moved NVDA today, and what’s the current analyst sentiment?"
@@ -41,11 +59,18 @@
         <button id="stop" type="button">Stop</button>
       </form>
 
-      <div class="chips" aria-label="Example questions">
+      <div class="chips" data-for-mode="research" aria-label="Example research questions">
         <button type="button" data-q="What moved NVDA today, and what’s the current analyst sentiment?">NVDA today + sentiment</button>
         <button type="button" data-q="Summarize the most recent Federal Reserve rate commentary and how markets reacted.">Latest Fed commentary</button>
         <button type="button" data-q="How did the big Canadian banks’ most recent quarterly earnings compare, and what stood out?">Canadian bank earnings</button>
         <button type="button" data-q="What is the latest US CPI print, and how did bonds and equities react?">Latest CPI + reaction</button>
+      </div>
+
+      <div class="chips" data-for-mode="learn" hidden aria-label="Example learning questions">
+        <button type="button" data-q="What is an ETF, and how is it different from a mutual fund?">ETFs vs mutual funds</button>
+        <button type="button" data-q="How does a TFSA compare to an RRSP for a first-time investor?">TFSA vs RRSP</button>
+        <button type="button" data-q="What are the risks of trading on margin?">Margin risks</button>
+        <button type="button" data-q="Explain dollar-cost averaging with a simple example.">Dollar-cost averaging</button>
       </div>
 
       <div id="runbar" class="runbar" aria-live="polite">

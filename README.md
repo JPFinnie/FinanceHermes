@@ -6,6 +6,11 @@ question; the model plans the research, calls a live web-search tool, reads what
 finds, and synthesizes an answer with citations, **streaming every step** (thinking →
 tool call → tool result → answer) to the page as it happens.
 
+The chatbot runs in **two modes**: **Research** (Tier 1, premium) does full live web
+research; **Learn** (Tier 2, freemium) is an educational coach grounded in the
+[CIBC Investor's Edge Learn library](https://www.investorsedge.cibc.com/en/learn.html).
+See "Chat modes" below.
+
 Deploys to Vercel as a static site plus one serverless function. No framework, no
 build step, zero npm dependencies.
 
@@ -13,18 +18,53 @@ build step, zero npm dependencies.
 
 ```
 agent.html ──POST /api/agent──▶ api/agent.js (Vercel Node function)
-    ▲                              │  agentic loop, up to 6 steps:
+    ▲        {query, mode}         │  agentic loop, up to 6 steps:
     │   SSE trace events           │  Hermes model ⇄ web_search / web_extract (Tavily)
-    └──────────────────────────────┘  keys live in server env only
+    └──────────────────────────────┘               ⇄ learn_lookup (api/learn-library.js)
 ```
 
 - `agent.html` + `assets/agent.{css,js}` + `assets/agent-field.js` — the standalone
-  demo page: query box, example chips, live trace renderer, particle background.
-- `api/agent.js` — the whole agent: provider selection, streaming tool-call loop,
-  web tools, SSE protocol. Same-origin only, so the existing strict CSP
-  (`connect-src 'self'`) is untouched; provider/search calls happen server-side.
+  demo page: mode toggle, query box, example chips, live trace renderer, particle
+  background.
+- `api/agent.js` — the whole agent: provider selection, mode/tier handling,
+  streaming tool-call loop, web + library tools, SSE protocol. Same-origin only, so
+  the existing strict CSP (`connect-src 'self'`) is untouched; provider/search calls
+  happen server-side.
+- `api/learn-library.js` — curated index of the CIBC Investor's Edge Learn library
+  plus the `learn_lookup` tool (local keyword search, no keys, no network).
 - `index.html` — landing page with the discreet **Research Agent** nav link (the
   same one-line link to add to the main site's nav when merging).
+
+## Chat modes: Research (Tier 1) and Learn (Tier 2)
+
+The page has a mode toggle, and `/api/agent` accepts
+`{"query": "...", "mode": "research" | "learn"}` (default `research`):
+
+| | **Research** — Tier 1 · premium | **Learn** — Tier 2 · freemium |
+| --- | --- | --- |
+| Persona | live financial-research agent | plain-language investing educator |
+| Tools | `web_search` + `web_extract` (Tavily) + `learn_lookup` | `learn_lookup`, plus `web_extract` restricted to CIBC Learn pages |
+| Grounding | live web with citations, plus "Learn more" links from the CIBC library | CIBC Investor's Edge Learn library, always linked and attributed |
+| Loop | up to 6 tool steps | up to 4 tool steps (freemium cost control) |
+| Live market data | yes | no — it teaches the concept and points to Research mode |
+
+`api/learn-library.js` is a curated **index** — not a copy — of the ~100 English pages
+in the [CIBC Investor's Edge Learn library](https://www.investorsedge.cibc.com/en/learn.html):
+the three courses (Investing 101, How to trade options, Trading with Investor's Edge)
+and the articles, videos and guides across stocks, ETFs and mutual funds, fixed income,
+options, portfolio strategies, structured notes, registered accounts (TFSA, RRSP, RRIF,
+RESP, FHSA) and platform how-tos. Each entry carries the page's own title, public URL
+and one-line meta description; the article content itself stays on CIBC's site, and
+answers link to and attribute it (the educational content is © CIBC). To refresh the
+index after CIBC publishes new articles, re-crawl the sitemap for `/en/learn` URLs —
+see the header comment in the file.
+
+**Tier gating:** set `PREMIUM_ACCESS_CODE` and Research-mode requests must carry a
+matching `access_code` in the POST body, otherwise they are answered in Learn mode
+with an explanatory notice (`init` events report `mode` and `tier`, so the UI shows
+which one ran). Left unset — the demo default — both modes are open; the env var
+marks the seam where a real subscription/entitlement check belongs. Learn mode never
+requires a code, and its `learn_lookup` tool works even without a `TAVILY_API_KEY`.
 
 ## Reference implementation
 
@@ -138,6 +178,9 @@ has a bad moment, the same page and trace run against canned data.
 - Good openers: *"What moved NVDA today, and what's the current analyst sentiment?"* ·
   *"Summarize the most recent Fed rate commentary and the market reaction."* · the
   Canadian-bank-earnings chip plays well with a CIBC Wood Gundy room.
+- Flip to **Learn** mode for the freemium story: *"How does a TFSA compare to an
+  RRSP?"* shows the agent grounding itself in CIBC's own Investor's Edge Learn
+  articles and linking back to them.
 - A full run typically lands in 10–30 s depending on model size and steps; the trace
   streaming keeps the room engaged while it works.
 - The function caps runs at 6 tool steps / ~50 s and wraps up gracefully with
@@ -146,8 +189,8 @@ has a bad moment, the same page and trace run against canned data.
 ## Merging into jpfinnie/website later
 
 Everything is namespaced to avoid collisions with the main site's files: copy
-`agent.html`, `assets/agent.css`, `assets/agent.js`, `assets/agent-field.js`, and
-`api/agent.js` into the website repo, add the one nav line from `index.html`
+`agent.html`, `assets/agent.css`, `assets/agent.js`, `assets/agent-field.js`,
+`api/agent.js`, and `api/learn-library.js` into the website repo, add the one nav line from `index.html`
 (`<a href="/agent.html">Research Agent</a>`), and merge the `functions` block of
 `vercel.json` into the site's existing one. The page calls only same-origin
 `/api/agent` and loads no external assets, so the site's `connect-src 'self'` CSP

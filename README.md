@@ -68,9 +68,12 @@ RESP, FHSA) and platform how-tos. It has two layers:
   after CIBC publishes or updates articles.
 
 The educational content is **© CIBC** — answers always attribute it and link the
-canonical page, and the system prompts require exact tool-returned URLs (never
-invented or relative links). If this ships beyond a demo, confirm content-licensing
-terms with CIBC first.
+canonical page. Link integrity is enforced, not hoped for: Learn mode seeds the
+conversation with the library's real matches for the question, the system prompts
+require exact tool-returned URLs, and a server-side pass validates every CIBC Learn
+link in the final answer against the library — normalizing real pages and repairing
+invented or relative URLs to the closest real article before the answer renders. If
+this ships beyond a demo, confirm content-licensing terms with CIBC first.
 
 **Tier gating:** set `PREMIUM_ACCESS_CODE` and Research-mode requests must carry a
 matching `access_code` in the POST body, otherwise they are answered in Learn mode

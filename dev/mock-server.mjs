@@ -79,9 +79,12 @@ const LEARN_FINAL_ANSWER = [
   "while ETFs trade all day at market prices and tend to cost less.\n\n",
   "### Keep learning\n",
   "- [What Is an ETF and How Does It Work?](https://www.investorsedge.cibc.com/en/learn/investing/etfs-and-mutual-funds/what-is-an-etf.html)\n",
-  // Deliberately a relative link and a bare URL — the client renderer must
-  // absolutize the first and auto-link the second (the real model does both).
-  "- [ETFs and Mutual Funds](/en/learn/investing/etfs-and-mutual-funds.html)\n\n",
+  // Deliberately broken the way real models break: a relative link, an
+  // INVENTED article URL, and a bare URL. The server must repair the invented
+  // one against the real library and absolutize the relative one before the
+  // answer card renders; the client renderer auto-links the bare one.
+  "- [ETFs and Mutual Funds](/en/learn/investing/etfs-and-mutual-funds.html)\n",
+  "- [TFSA basics](https://www.investorsedge.cibc.com/en/learn/tfsa/tfsa-basics.html)\n\n",
   "Full library: https://www.investorsedge.cibc.com/en/learn.html\n\n",
   "*Educational content from the CIBC Investor's Edge Learn library.*\n",
 ];

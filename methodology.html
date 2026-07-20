@@ -254,6 +254,14 @@
             working across providers and serving stacks.
           </li>
           <li>
+            <strong>Link integrity.</strong> Models occasionally invent plausible-looking
+            article URLs. Learn mode seeds the conversation with the library's real
+            matches for the question, and every final answer passes through a
+            server-side check that validates each CIBC Learn link against the library —
+            normalizing real pages and repairing invented or relative URLs to the
+            closest real article before the answer renders.
+          </li>
+          <li>
             <strong>Failures degrade gracefully.</strong> A bad key, a missing model, or a
             rate limit produces a plain-language error card — with the upstream detail
             attached — instead of a crash.

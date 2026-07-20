@@ -38,7 +38,14 @@
 // matching "access_code" in the body — the hook where a real Tier 1
 // entitlement check (auth/subscription) belongs. Unset = both modes open.
 
-import { LEARN_LOOKUP_SCHEMA, LEARN_READ_SCHEMA, runLearnLookup, runLearnRead } from "./learn-library.js";
+import {
+  LEARN_LOOKUP_SCHEMA,
+  LEARN_READ_SCHEMA,
+  runLearnLookup,
+  runLearnRead,
+  searchLearnLibrary,
+  repairLearnLinks,
+} from "./learn-library.js";
 
 const NOUS_BASE_URL = "https://inference-api.nousresearch.com/v1";
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
@@ -153,7 +160,7 @@ function resolveProvider(env) {
   return null;
 }
 
-function buildSystemPrompt(env, searchEnabled, mode) {
+function buildSystemPrompt(env, searchEnabled, mode, query) {
   const today = new Date().toISOString().slice(0, 10);
   const parts = [];
   if (env.HERMES_REASONING === "1") parts.push(HERMES_REASONING_DIRECTIVE);
@@ -179,9 +186,22 @@ function buildSystemPrompt(env, searchEnabled, mode) {
     );
     parts.push(
       "Linking rules: write links as markdown [title](url) using the exact canonical URLs the tools return — " +
-        "always absolute https://www.investorsedge.cibc.com/... addresses. Never invent, shorten, or use " +
-        "relative URLs like /en/learn/…, and never link pages the tools did not return."
+        "always absolute https://www.investorsedge.cibc.com/... addresses. Never write a URL from memory: " +
+        "every link must be copied verbatim from a tool result in this conversation. Never invent, shorten, " +
+        "or use relative URLs like /en/learn/…, and never link pages the tools did not return."
     );
+    // Seed the conversation with the library's top matches so grounding never
+    // depends on the model choosing to call tools, and the only URLs in
+    // context are real ones.
+    const seeds = searchLearnLibrary(query, 5);
+    if (seeds.length) {
+      parts.push(
+        "To save you a step, learn_lookup has already been run on the user's question. Top matches:\n" +
+          seeds.map((s) => `- ${s.title} [${s.category}] — ${s.url}\n  ${s.summary}`).join("\n") +
+          "\nStart by calling learn_read on the most relevant of these URLs; run learn_lookup again only " +
+          "for different angles."
+      );
+    }
     parts.push(
       "Stay educational. Do not give personalized investment advice or buy/sell recommendations, and do not " +
         "quote live prices or claim current market data — Learn mode has no live market tools. If the user " +
@@ -742,7 +762,7 @@ export default async function handler(req, res) {
   }
 
   const messages = [
-    { role: "system", content: buildSystemPrompt(env, searchEnabled, mode) },
+    { role: "system", content: buildSystemPrompt(env, searchEnabled, mode, query) },
     { role: "user", content: query },
   ];
 
@@ -848,6 +868,11 @@ export default async function handler(req, res) {
         t.clear();
       }
     }
+
+    // Deterministic guard: models sometimes invent plausible Learn URLs.
+    // Normalize/repair every CIBC Learn link against the real library before
+    // the answer card renders (the streamed deltas are replaced by this).
+    finalAnswer = repairLearnLinks(finalAnswer);
 
     send({
       type: "done",

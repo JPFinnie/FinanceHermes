@@ -301,9 +301,30 @@ const tokenize = (s) =>
 // Light stemmer so "dividends" matches "dividend", "investing" ~ "invest".
 const stem = (t) => t.replace(/(ing|ings|ers|er|ies|es|s)$/,"").replace(/ie$/, "y") || t;
 
+// Lazily built document frequencies so rare, distinctive tokens ("tfsa",
+// "margin") outrank filler that appears across many titles ("basics",
+// "guide") — without this, invented links like "TFSA basics" repair to
+// whichever title happens to contain "basics".
+let DF = null;
+function docFreq(token) {
+  if (!DF) {
+    DF = new Map();
+    for (const entry of LEARN_LIBRARY) {
+      const seen = new Set(tokenize(entry.title + " " + entry.summary).map(stem));
+      for (const t of seen) DF.set(t, (DF.get(t) || 0) + 1);
+    }
+  }
+  return DF.get(token) || 0;
+}
+const rarity = (t) => {
+  const df = docFreq(t);
+  return df <= 2 ? 3 : df <= 6 ? 2 : 1;
+};
+
 // Rank library entries against free-text keywords. Scoring is intentionally
-// simple (title > summary > category/url token hits, plus a phrase bonus) —
-// the library is ~100 entries, so exhaustive scoring is instant.
+// simple (title > summary > category/url token hits, weighted by token
+// rarity, plus a phrase bonus) — the library is ~100 entries, so exhaustive
+// scoring is instant.
 export function searchLearnLibrary(query, limit = 5) {
   const qTokens = [...new Set(tokenize(query).map(stem))];
   if (!qTokens.length) return [];
@@ -317,9 +338,10 @@ export function searchLearnLibrary(query, limit = 5) {
     const otherTokens = new Set(tokenize(entry.category + " " + entry.url).map(stem));
     let score = 0;
     for (const t of qTokens) {
-      if (titleTokens.has(t)) score += 4;
-      else if (summaryTokens.has(t)) score += 2;
-      else if (otherTokens.has(t)) score += 1;
+      const w = rarity(t);
+      if (titleTokens.has(t)) score += 4 * w;
+      else if (summaryTokens.has(t)) score += 2 * w;
+      else if (otherTokens.has(t)) score += 1 * w;
     }
     if (phrase.length >= 6 && (title.includes(phrase) || summary.includes(phrase))) score += 6;
     if (score > 0) scored.push({ entry, score });
@@ -414,6 +436,62 @@ export function runLearnRead(args) {
       items: docs.map((d) => ({ title: d.title, url: d.url, snippet: clipText(d.body, 220) })),
     },
   };
+}
+
+// Models sometimes invent plausible-looking Learn URLs (e.g.
+// /en/learn/tfsa/tfsa-basics.html) instead of copying the canonical ones from
+// tool results. This deterministic post-processor runs on every final answer:
+// each link or bare URL pointing under investorsedge.cibc.com/en/learn is
+// checked against the library; real pages are normalized to their canonical
+// form, and invented ones are replaced by the library's best match for the
+// link text + slug — or demoted to plain text when nothing matches. Links to
+// anything other than the Learn section are left untouched.
+export function repairLearnLinks(md) {
+  if (!md) return md;
+  const repair = (url, text) => {
+    const path = learnPath(url);
+    if (path === null || !/^\/en\/learn(\.html$|\/)/i.test(path)) return null; // not a Learn link — leave as-is
+    const canonical = LEARN_BASE_URL + path;
+    if (LEARN_CONTENT[path] || LEARN_LIBRARY.some((e) => e.url === canonical)) return canonical;
+    // Invented slugs are usually near-misses of a real one ("what-is-etf" for
+    // "what-is-an-etf"), so try slug-token similarity first…
+    const slugTokens = new Set(path.replace(/\.html$/i, "").split("/").pop().split(/[-_]+/).filter(Boolean));
+    let best = null;
+    let bestSim = 0;
+    for (const e of LEARN_LIBRARY) {
+      const entryTokens = new Set(e.url.replace(/\.html$/i, "").split("/").pop().split(/[-_]+/));
+      const overlap = [...slugTokens].filter((t) => entryTokens.has(t)).length;
+      const sim = overlap / (slugTokens.size + entryTokens.size - overlap);
+      if (sim > bestSim) {
+        bestSim = sim;
+        best = e;
+      }
+    }
+    if (bestSim >= 0.5) return best.url;
+    // …then fall back to a keyword search over link text + slug words.
+    const slug = [...slugTokens].join(" ");
+    const hits = searchLearnLibrary(`${text || ""} ${slug}`, 1);
+    return hits.length ? hits[0].url : ""; // "" → drop the dead link, keep the text
+  };
+  // Markdown links: [text](url)
+  md = md.replace(
+    /\[([^\]]+)\]\(\s*((?:https?:\/\/[^\s)]*investorsedge\.cibc\.com[^\s)]*|\/en\/learn[^\s)]*))\s*\)/gi,
+    (m, text, url) => {
+      const fixed = repair(url, text);
+      if (fixed === null) return m;
+      return fixed ? `[${text}](${fixed})` : text;
+    }
+  );
+  // Bare URLs outside markdown syntax.
+  md = md.replace(
+    /(^|[^("\[\]])((?:https?:\/\/)(?:www\.)?investorsedge\.cibc\.com\/[^\s)\]<>"']+)/gi,
+    (m, pre, url) => {
+      const fixed = repair(url, "");
+      if (fixed === null || fixed === "" || fixed === url) return m;
+      return pre + fixed;
+    }
+  );
+  return md;
 }
 
 // Execute a learn_lookup tool call; returns the same { forModel, display }

@@ -25,10 +25,12 @@
       <p class="kicker">Methodology · what's under the hood</p>
       <h1>How this demo works</h1>
       <p class="lede">
-        FinanceHermes is a real agent, not a recording. This page explains the three layers
+        FinanceHermes is a real agent, not a recording. This page explains the layers
         behind it: <strong>Nous Research</strong> (who builds the model),
-        <strong>Hermes&nbsp;4</strong> (how the model reasons), and the
-        <strong>research loop</strong> you watch run on the agent page.
+        <strong>Hermes&nbsp;4</strong> (how the model reasons), the
+        <strong>research loop</strong> you watch run on the agent page, and the
+        <strong>CIBC Investor's Edge Learn library</strong> that grounds the free
+        Learn mode.
       </p>
     </header>
 
@@ -108,11 +110,14 @@
             immediately.
           </li>
           <li>
-            <strong>Acting.</strong> The agent has exactly two tools, both backed by the
+            <strong>Acting.</strong> In Research mode the agent has two live-web tools,
+            both backed by the
             <a href="https://www.tavily.com" target="_blank" rel="noopener noreferrer">Tavily</a>
             search API: <code>web_search</code> (live web search) and
             <code>web_extract</code> (fetch a page or PDF and convert it to readable text).
-            These hit the live web — results differ day to day, which is the point.
+            These hit the live web — results differ day to day, which is the point. A third
+            tool, <code>learn_lookup</code>, searches the CIBC Investor's Edge Learn
+            library (described below) so answers can close with "Learn more" reading.
           </li>
           <li>
             <strong>Observing.</strong> Tool results are handed back to the model as
@@ -129,6 +134,89 @@
           Every event in that loop — thinking deltas, tool calls, tool results, the answer
           streaming in — is pushed to your browser over a server-sent-event stream as it
           happens. Nothing is pre-computed or replayed.
+        </p>
+      </section>
+
+      <section>
+        <p class="doc-label">The library</p>
+        <h2>How the Investor's Edge Learn content was catalogued</h2>
+        <p>
+          The Learn chatbot is grounded in the
+          <a href="https://www.investorsedge.cibc.com/en/learn.html" target="_blank" rel="noopener noreferrer">CIBC
+          Investor's Edge Learn library</a>. Rather than copying CIBC's articles, we built a
+          <strong>curated index</strong> of them — one entry per page — in three steps:
+        </p>
+        <ol>
+          <li>
+            <strong>Enumerate.</strong> Starting from the Learn hub page, we read the
+            site's public sitemap and collected every English <code>/en/learn</code> URL —
+            about 100 pages: the three courses (Investing&nbsp;101, How to trade options,
+            Trading with Investor's Edge) and the articles, videos and guides across
+            stocks, ETFs and mutual funds, fixed income, options, portfolio strategies,
+            structured notes, registered accounts (TFSA, RRSP, RRIF, RESP, FHSA) and
+            platform how-tos. The sitemap matters because the topic pages load their
+            article lists with JavaScript — the sitemap is the complete, crawlable record.
+          </li>
+          <li>
+            <strong>Capture metadata only.</strong> Each page was fetched once and exactly
+            two things were kept: the page's own <code>&lt;title&gt;</code> and its
+            one-line meta description. The article bodies were not stored — the content
+            stays on CIBC's site, © CIBC.
+          </li>
+          <li>
+            <strong>Index for retrieval.</strong> The entries — category, title, official
+            URL, one-line summary — live in a single module (<code>api/learn-library.js</code>)
+            with a small keyword-scoring search exposed to the model as the
+            <code>learn_lookup</code> tool. It runs locally in the serverless function: no
+            keys, no network, instant. When a fuller read is needed, the agent extracts the
+            live CIBC page and links it, so answers always point back to the source.
+          </li>
+        </ol>
+        <p>
+          The index is a snapshot (catalogued July 2026); refreshing it is a matter of
+          re-crawling the sitemap for new <code>/en/learn</code> URLs and regenerating the
+          entries.
+        </p>
+      </section>
+
+      <section>
+        <p class="doc-label">The tiers</p>
+        <h2>Freemium: why Learn mode only answers learning questions</h2>
+        <p>
+          The chatbot runs in two modes, and the difference is enforced
+          <strong>server-side by the tools each tier is given</strong>, not just by
+          prompting:
+        </p>
+        <ul>
+          <li>
+            <strong>Research — Tier 1, premium.</strong> The full live loop above:
+            <code>web_search</code>, <code>web_extract</code>, and <code>learn_lookup</code>,
+            up to 6 agent steps.
+          </li>
+          <li>
+            <strong>Learn — Tier 2, freemium.</strong> The educational chatbot. It has
+            <em>no</em> <code>web_search</code> tool at all, so it cannot do open web
+            research even if asked; <code>web_extract</code> is restricted server-side to
+            <code>investorsedge.cibc.com/en/learn</code> URLs and any other address is
+            rejected; and the loop is capped at 4 steps. Every answer starts from
+            <code>learn_lookup</code>, is grounded in what the CIBC library covers, and
+            closes with a "Keep learning" section linking the source pages.
+          </li>
+        </ul>
+        <p>
+          On top of the tool scoping, the Learn-mode system prompt sets the persona: a
+          plain-language investing educator that defines jargon, uses simple worked
+          examples, gives no personalized advice or buy/sell recommendations, and quotes
+          no live prices. Ask it a live-market question — "what moved NVDA today?" — and
+          it will say that live research is a Research-mode (Tier&nbsp;1) feature, then
+          teach the underlying concept as far as the library allows. That is the freemium
+          contract: learning questions get full answers; market research is the paid tier.
+        </p>
+        <p>
+          The tier boundary itself is a one-line entitlement check: if a
+          <code>PREMIUM_ACCESS_CODE</code> is configured, Research-mode requests without
+          it are answered in Learn mode with a notice — the seam where a real
+          subscription system plugs in.
         </p>
       </section>
 

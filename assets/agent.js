@@ -59,13 +59,28 @@
 
   const safeHref = (url) => (/^https?:\/\/[^\s"'<>]+$/i.test(url) ? url : null);
 
+  // The CIBC Learn articles link with relative /en/... paths; if the model
+  // repeats one it would 404 on this domain, so resolve those to
+  // investorsedge.cibc.com before the safety check.
+  const resolveHref = (url) =>
+    safeHref(/^\/en\//i.test(url) ? "https://www.investorsedge.cibc.com" + url : url);
+
   function inlineMd(s) {
     // input is already HTML-escaped
-    s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (m, text, url) => {
-      const href = safeHref(url);
+    s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/en\/[^\s)]+)\)/g, (m, text, url) => {
+      const href = resolveHref(url);
       return href
         ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`
         : text;
+    });
+    // Auto-link bare URLs the model didn't wrap in markdown. Skip anything
+    // already inside a tag from the pass above (preceded by " or >).
+    s = s.replace(/(^|[^">])(https?:\/\/[^\s<>"')\]]+)/g, (m, pre, url) => {
+      const trimmed = url.replace(/[.,;:!?]+$/, "");
+      const href = safeHref(trimmed);
+      if (!href) return m;
+      const tail = url.slice(trimmed.length);
+      return `${pre}<a href="${href}" target="_blank" rel="noopener noreferrer">${trimmed}</a>${tail}`;
     });
     s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
     s = s.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");

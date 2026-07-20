@@ -115,9 +115,10 @@
             <a href="https://www.tavily.com" target="_blank" rel="noopener noreferrer">Tavily</a>
             search API: <code>web_search</code> (live web search) and
             <code>web_extract</code> (fetch a page or PDF and convert it to readable text).
-            These hit the live web — results differ day to day, which is the point. A third
-            tool, <code>learn_lookup</code>, searches the CIBC Investor's Edge Learn
-            library (described below) so answers can close with "Learn more" reading.
+            These hit the live web — results differ day to day, which is the point. Two
+            further tools, <code>learn_lookup</code> and <code>learn_read</code>, search
+            and read the CIBC Investor's Edge Learn library (described below) so answers
+            can draw on its articles and close with "Learn more" reading.
           </li>
           <li>
             <strong>Observing.</strong> Tool results are handed back to the model as
@@ -143,8 +144,7 @@
         <p>
           The Learn chatbot is grounded in the
           <a href="https://www.investorsedge.cibc.com/en/learn.html" target="_blank" rel="noopener noreferrer">CIBC
-          Investor's Edge Learn library</a>. Rather than copying CIBC's articles, we built a
-          <strong>curated index</strong> of them — one entry per page — in three steps:
+          Investor's Edge Learn library</a>, captured in three steps:
         </p>
         <ol>
           <li>
@@ -158,24 +158,31 @@
             article lists with JavaScript — the sitemap is the complete, crawlable record.
           </li>
           <li>
-            <strong>Capture metadata only.</strong> Each page was fetched once and exactly
-            two things were kept: the page's own <code>&lt;title&gt;</code> and its
-            one-line meta description. The article bodies were not stored — the content
-            stays on CIBC's site, © CIBC.
+            <strong>Capture.</strong> Each page was fetched and two layers were kept: the
+            page's own <code>&lt;title&gt;</code> and one-line meta description (the
+            searchable index), and the full article body from the page's
+            <code>&lt;main&gt;</code> content, converted to clean markdown — headings,
+            paragraphs, lists, links, tables — with scripts, navigation and page chrome
+            stripped. Every link inside the articles is rewritten from the site's
+            relative <code>/en/…</code> form to an absolute
+            <code>investorsedge.cibc.com</code> URL, so any link the model repeats in an
+            answer actually resolves. The content is © CIBC: answers attribute it and
+            cite the canonical source page.
           </li>
           <li>
-            <strong>Index for retrieval.</strong> The entries — category, title, official
-            URL, one-line summary — live in a single module (<code>api/learn-library.js</code>)
-            with a small keyword-scoring search exposed to the model as the
-            <code>learn_lookup</code> tool. It runs locally in the serverless function: no
-            keys, no network, instant. When a fuller read is needed, the agent extracts the
-            live CIBC page and links it, so answers always point back to the source.
+            <strong>Serve locally.</strong> The index lives in
+            <code>api/learn-library.js</code> behind a keyword-scoring
+            <code>learn_lookup</code> tool; the article bodies live in a generated module
+            (<code>api/learn-content.js</code>) behind a <code>learn_read</code> tool that
+            returns the stored markdown. Both run inside the serverless function itself:
+            no keys, no network, instant — so the chatbot can quote and teach from the
+            articles' real content and link back to the source.
           </li>
         </ol>
         <p>
-          The index is a snapshot (catalogued July 2026); refreshing it is a matter of
-          re-crawling the sitemap for new <code>/en/learn</code> URLs and regenerating the
-          entries.
+          The library is a snapshot (catalogued July 2026). Refreshing it is one command
+          — <code>node dev/build-learn-content.mjs</code> re-fetches every indexed page —
+          plus a sitemap re-crawl when CIBC adds new articles.
         </p>
       </section>
 
@@ -195,12 +202,13 @@
           </li>
           <li>
             <strong>Learn — Tier 2, freemium.</strong> The educational chatbot. It has
-            <em>no</em> <code>web_search</code> tool at all, so it cannot do open web
-            research even if asked; <code>web_extract</code> is restricted server-side to
-            <code>investorsedge.cibc.com/en/learn</code> URLs and any other address is
-            rejected; and the loop is capped at 4 steps. Every answer starts from
-            <code>learn_lookup</code>, is grounded in what the CIBC library covers, and
-            closes with a "Keep learning" section linking the source pages.
+            <em>no</em> web tools at all — any <code>web_search</code> or
+            <code>web_extract</code> call is rejected server-side, so it cannot do open
+            web research even if asked — and the loop is capped at 4 steps. Its only
+            tools are the local library: every answer starts from
+            <code>learn_lookup</code>, reads the relevant article's full text with
+            <code>learn_read</code>, teaches from that actual content, and closes with a
+            "Keep learning" section linking the source pages.
           </li>
         </ul>
         <p>

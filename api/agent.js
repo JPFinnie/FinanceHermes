@@ -30,13 +30,15 @@
 //     learn_lookup over the CIBC Investor's Edge Learn library for "Learn
 //     more" links.
 //   * learn    — Tier 2 (freemium): an educational chatbot grounded in the
-//     CIBC Investor's Edge Learn library (api/learn-library.js). No open web
-//     search; web_extract is restricted to CIBC Learn pages.
+//     CIBC Investor's Edge Learn library (api/learn-library.js + the locally
+//     cached article bodies in api/learn-content.js). No web tools at all —
+//     learn_lookup finds articles and learn_read serves their full text, so
+//     the tier runs keyless and never leaves the function.
 // If PREMIUM_ACCESS_CODE is set, research mode additionally requires a
 // matching "access_code" in the body — the hook where a real Tier 1
 // entitlement check (auth/subscription) belongs. Unset = both modes open.
 
-import { LEARN_LOOKUP_SCHEMA, runLearnLookup, isLearnUrl } from "./learn-library.js";
+import { LEARN_LOOKUP_SCHEMA, LEARN_READ_SCHEMA, runLearnLookup, runLearnRead } from "./learn-library.js";
 
 const NOUS_BASE_URL = "https://inference-api.nousresearch.com/v1";
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
@@ -115,17 +117,7 @@ const WEB_EXTRACT_SCHEMA = {
   },
 };
 
-// Learn-mode variant of web_extract: same wire shape, but scoped to the CIBC
-// Investor's Edge Learn section (enforced server-side in runWebExtract too).
-const LEARN_EXTRACT_SCHEMA = {
-  ...WEB_EXTRACT_SCHEMA,
-  description:
-    "Read the full text of official CIBC Investor's Edge Learn pages (returned as markdown). Only public " +
-    "https://www.investorsedge.cibc.com/en/learn/... URLs are allowed — take them from learn_lookup " +
-    "results. Use this when an article's one-line summary is not enough to answer confidently.",
-};
-
-const TOOL_EMOJI = { web_search: "🔍", web_extract: "📄", learn_lookup: "🎓" };
+const TOOL_EMOJI = { web_search: "🔍", web_extract: "📄", learn_lookup: "🎓", learn_read: "📖" };
 
 function resolveProvider(env) {
   if (env.HERMES_BASE_URL && env.HERMES_API_KEY) {
@@ -176,14 +168,19 @@ function buildSystemPrompt(env, searchEnabled, mode) {
         "use short concrete examples with simple numbers where they help."
     );
     parts.push(
-      "Your grounding source is the official CIBC Investor's Edge Learn library. For each question, call " +
-        "learn_lookup first to find the relevant CIBC pages" +
-        (searchEnabled
-          ? ", and use web_extract to read a page in full when its one-line summary is not enough to answer confidently"
-          : "") +
-        ". Base your explanation on what the library covers, attribute the material to CIBC Investor's Edge, " +
-        'and end with a "Keep learning" section linking 1-3 of the most relevant pages as markdown links. If ' +
-        "the library has no relevant page, say so and give a careful general-knowledge explanation instead."
+      "Your grounding source is the official CIBC Investor's Edge Learn library, available locally through " +
+        "two tools. For each question: call learn_lookup first to find the relevant CIBC pages, then call " +
+        "learn_read on the best 1-2 URLs to get the articles' full text. Base your answer on that actual " +
+        "article content — summarize and teach from it, include its key specifics (definitions, numbers, " +
+        "rules, examples), and quote short passages where CIBC's wording matters, always attributing the " +
+        'material to CIBC Investor\'s Edge. End with a "Keep learning" section linking 1-3 of the pages you ' +
+        "used. If the library has no relevant page, say so and give a careful general-knowledge explanation " +
+        "instead."
+    );
+    parts.push(
+      "Linking rules: write links as markdown [title](url) using the exact canonical URLs the tools return — " +
+        "always absolute https://www.investorsedge.cibc.com/... addresses. Never invent, shorten, or use " +
+        "relative URLs like /en/learn/…, and never link pages the tools did not return."
     );
     parts.push(
       "Stay educational. Do not give personalized investment advice or buy/sell recommendations, and do not " +
@@ -221,11 +218,13 @@ function buildSystemPrompt(env, searchEnabled, mode) {
     );
   }
   parts.push(
-    "You also have learn_lookup, a search over the official CIBC Investor's Edge Learn library (~100 " +
-      "educational articles, courses and guides). When your answer leans on a concept the library explains — " +
-      "margin, options strategies, covered call ETFs, registered accounts like TFSAs and RRSPs, dollar-cost " +
-      'averaging, tax-loss selling and so on — call it and close with a short "Learn more" section of 1-3 ' +
-      "relevant CIBC Learn links. Live research stays primary; the library supplements it."
+    "You also have the CIBC Investor's Edge Learn library (~100 educational articles, courses and guides) " +
+      "through two local tools: learn_lookup (search the index) and learn_read (full article text). When " +
+      "your answer leans on a concept the library explains — margin, options strategies, covered call ETFs, " +
+      "registered accounts like TFSAs and RRSPs, dollar-cost averaging, tax-loss selling and so on — look it " +
+      "up, draw on the article content, and close with a short \"Learn more\" section of 1-3 relevant CIBC " +
+      "Learn links (exact URLs as returned by the tools, never relative paths). Live research stays primary; " +
+      "the library supplements it."
   );
   parts.push(
     "When you have what you need, produce a clear, well-structured final answer in markdown: a one-paragraph " +
@@ -547,21 +546,8 @@ async function runWebSearch(env, args, signal) {
   };
 }
 
-async function runWebExtract(env, args, signal, mode) {
-  let urls = (Array.isArray(args.urls) ? args.urls : []).filter((u) => /^https?:\/\//i.test(String(u))).slice(0, 3);
-  if (mode === "learn") {
-    // Freemium tier reads only the public CIBC Investor's Edge Learn pages.
-    const allowed = urls.filter(isLearnUrl);
-    if (urls.length && !allowed.length) {
-      return {
-        forModel:
-          "Error: in Learn mode web_extract can only read CIBC Investor's Edge Learn pages " +
-          "(https://www.investorsedge.cibc.com/en/learn/...). Use URLs from learn_lookup results.",
-        display: { ok: false, summary: "Learn mode reads CIBC Learn pages only" },
-      };
-    }
-    urls = allowed;
-  }
+async function runWebExtract(env, args, signal) {
+  const urls = (Array.isArray(args.urls) ? args.urls : []).filter((u) => /^https?:\/\//i.test(String(u))).slice(0, 3);
   if (!urls.length) return { forModel: "Error: no valid http(s) URLs given.", display: { ok: false, summary: "no valid URLs" } };
   const json = await tavilyRequest(env, "extract", { urls }, signal);
   const docs = (json.results || []).map((r) => ({
@@ -582,21 +568,21 @@ async function runWebExtract(env, args, signal, mode) {
 }
 
 async function execTool(env, name, args, signal, mode, searchEnabled) {
-  // learn_lookup is local (api/learn-library.js) — no keys, no network.
+  // The library tools are local (api/learn-library.js) — no keys, no network.
   if (name === "learn_lookup") return runLearnLookup(args);
+  if (name === "learn_read") return runLearnRead(args);
+  if (mode === "learn") {
+    // Freemium tier: no web tools, even if the model hallucinates a call.
+    return {
+      forModel: `Error: ${name} is not available in Learn mode. Use learn_lookup and learn_read instead.`,
+      display: { ok: false, summary: "not available in Learn mode" },
+    };
+  }
   if (!searchEnabled) {
     return { forModel: "Error: web tools are not configured.", display: { ok: false, summary: "tools disabled" } };
   }
-  if (name === "web_search") {
-    if (mode === "learn") {
-      return {
-        forModel: "Error: web_search is not available in Learn mode. Use learn_lookup instead.",
-        display: { ok: false, summary: "not available in Learn mode" },
-      };
-    }
-    return runWebSearch(env, args, signal);
-  }
-  if (name === "web_extract") return runWebExtract(env, args, signal, mode);
+  if (name === "web_search") return runWebSearch(env, args, signal);
+  if (name === "web_extract") return runWebExtract(env, args, signal);
   return { forModel: `Error: unknown tool "${name}".`, display: { ok: false, summary: "unknown tool" } };
 }
 
@@ -721,12 +707,13 @@ export default async function handler(req, res) {
   }
 
   const searchEnabled = Boolean(env.TAVILY_API_KEY);
-  // learn_lookup is available in both modes and needs no keys; the web tools
-  // depend on Tavily, and Learn mode gets only the CIBC-scoped extract.
+  // The library tools work in both modes and need no keys (local index +
+  // cached article bodies); only the web tools depend on Tavily. Learn mode
+  // is library-only, so the freemium tier runs fully keyless.
   const tools =
     mode === "learn"
-      ? [LEARN_LOOKUP_SCHEMA, ...(searchEnabled ? [LEARN_EXTRACT_SCHEMA] : [])]
-      : [...(searchEnabled ? [WEB_SEARCH_SCHEMA, WEB_EXTRACT_SCHEMA] : []), LEARN_LOOKUP_SCHEMA];
+      ? [LEARN_LOOKUP_SCHEMA, LEARN_READ_SCHEMA]
+      : [...(searchEnabled ? [WEB_SEARCH_SCHEMA, WEB_EXTRACT_SCHEMA] : []), LEARN_LOOKUP_SCHEMA, LEARN_READ_SCHEMA];
 
   send({
     type: "init",
@@ -745,13 +732,12 @@ export default async function handler(req, res) {
         "in Learn mode (Tier 2, free) instead, grounded in the CIBC Investor's Edge Learn library.",
     });
   }
-  if (!searchEnabled) {
+  if (!searchEnabled && mode !== "learn") {
+    // Learn mode is unaffected: its tools are local and keyless.
     send({
       type: "status",
       message:
-        mode === "learn"
-          ? "TAVILY_API_KEY is not set — Learn mode will answer from the library index without reading full articles."
-          : "TAVILY_API_KEY is not set — running model-only (no live web search). Answers may not reflect today's data.",
+        "TAVILY_API_KEY is not set — running model-only (no live web search). Answers may not reflect today's data.",
     });
   }
 

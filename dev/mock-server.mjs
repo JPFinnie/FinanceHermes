@@ -71,14 +71,18 @@ const FINAL_ANSWER = [
 ];
 
 const LEARN_FINAL_ANSWER = [
-  "**An ETF (exchange-traded fund)** is a professionally managed fund that holds a basket of ",
-  "stocks or bonds and trades on a stock exchange, so you can buy or sell it like a single stock. ",
-  "One purchase spreads your money across the whole basket — that's diversification.\n\n",
+  "**An ETF (exchange-traded fund)** is, in CIBC's words, \"a professionally managed fund that ",
+  "holds stocks or bonds and trades on exchanges, offering broad market exposure.\" You buy or ",
+  "sell it like a single stock, and one purchase spreads your money across the whole basket — ",
+  "that's diversification.\n\n",
   "A **mutual fund** also pools investments, but it prices once a day and often carries higher fees, ",
   "while ETFs trade all day at market prices and tend to cost less.\n\n",
   "### Keep learning\n",
   "- [What Is an ETF and How Does It Work?](https://www.investorsedge.cibc.com/en/learn/investing/etfs-and-mutual-funds/what-is-an-etf.html)\n",
-  "- [ETFs and Mutual Funds](https://www.investorsedge.cibc.com/en/learn/investing/etfs-and-mutual-funds.html)\n\n",
+  // Deliberately a relative link and a bare URL — the client renderer must
+  // absolutize the first and auto-link the second (the real model does both).
+  "- [ETFs and Mutual Funds](/en/learn/investing/etfs-and-mutual-funds.html)\n\n",
+  "Full library: https://www.investorsedge.cibc.com/en/learn.html\n\n",
   "*Educational content from the CIBC Investor's Edge Learn library.*\n",
 ];
 
@@ -88,15 +92,24 @@ function mockChat(req, res, body) {
   const model = String(body.model || "");
   const toolNames = (body.tools || []).map((t) => t?.function?.name).filter(Boolean);
 
-  // Learn mode (Tier 2): learn_lookup offered, open web_search absent. The
-  // learn_lookup call executes for real inside api/agent.js (local library,
-  // no network), so this exercises the library search end to end.
+  // Learn mode (Tier 2): library tools offered, open web_search absent. Both
+  // learn_lookup and learn_read execute for real inside api/agent.js (local
+  // index + cached bodies, no network), so this exercises the library end to
+  // end: search → read full article → answer grounded in its content.
   if (toolNames.includes("learn_lookup") && !toolNames.includes("web_search")) {
-    if (!hadToolResults) {
+    const toolRounds = messages.filter((m) => m.role === "tool").length;
+    if (toolRounds === 0) {
       return sseChunks(res, [
         { content: "<think>An educational question. I should ground the answer in the CIBC Learn library first.</think>" },
         { content: "Checking the CIBC Investor's Edge Learn library…" },
         { tool_calls: [{ index: 0, id: "call_mock_learn", function: { name: "learn_lookup", arguments: '{"query": "what is an etf", "limit": 3}' } }] },
+      ]);
+    }
+    if (toolRounds === 1) {
+      return sseChunks(res, [
+        { content: "<think>Good matches — I'll read the ETF explainer in full before answering.</think>" },
+        { content: "Reading the full article…" },
+        { tool_calls: [{ index: 0, id: "call_mock_read", function: { name: "learn_read", arguments: '{"urls": ["https://www.investorsedge.cibc.com/en/learn/investing/etfs-and-mutual-funds/what-is-an-etf.html"]}' } }] },
       ]);
     }
     return sseChunks(res, LEARN_FINAL_ANSWER.map((content) => ({ content })));

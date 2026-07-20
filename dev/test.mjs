@@ -176,18 +176,30 @@ async function scenarioLearnMode() {
     const init = events.find((e) => e.type === "init");
     ok(init?.mode === "learn" && init?.tier === 2, "init reports learn mode (Tier 2)");
     ok(init?.max_steps === 4, "learn mode runs the shorter loop");
-    const call = events.find((e) => e.type === "tool_call");
-    ok(call?.name === "learn_lookup" && /etf/i.test(call?.args?.query || ""), "model calls learn_lookup");
-    const result = events.find((e) => e.type === "tool_result");
-    ok(result?.ok === true && Array.isArray(result.items) && result.items.length > 0, "library search returns articles");
+    const calls = events.filter((e) => e.type === "tool_call");
+    ok(calls[0]?.name === "learn_lookup" && /etf/i.test(calls[0]?.args?.query || ""), "model calls learn_lookup");
+    const lookup = events.filter((e) => e.type === "tool_result").find((e) => e.name === "learn_lookup");
+    ok(lookup?.ok === true && Array.isArray(lookup.items) && lookup.items.length > 0, "library search returns articles");
     ok(
-      (result?.items || []).every((r) => r.url.startsWith("https://www.investorsedge.cibc.com/en/learn")),
+      (lookup?.items || []).every((r) => r.url.startsWith("https://www.investorsedge.cibc.com/en/learn")),
       "all results are CIBC Learn pages"
     );
-    ok(/what is an etf/i.test(result?.items?.[0]?.title || ""), "top hit is the ETF explainer");
+    ok(/what is an etf/i.test(lookup?.items?.[0]?.title || ""), "top hit is the ETF explainer");
+    ok(
+      calls[1]?.name === "learn_read" && /what-is-an-etf/.test((calls[1]?.args?.urls || [])[0] || ""),
+      "model reads the full article with learn_read"
+    );
+    const read = events.filter((e) => e.type === "tool_result").find((e) => e.name === "learn_read");
+    ok(
+      read?.ok === true &&
+        read.items?.[0]?.url === "https://www.investorsedge.cibc.com/en/learn/investing/etfs-and-mutual-funds/what-is-an-etf.html" &&
+        (read.items?.[0]?.snippet || "").length > 50,
+      "learn_read serves the locally cached article body"
+    );
     ok(!events.some((e) => e.type === "tool_call" && e.name === "web_search"), "no open web_search in learn mode");
     const done = events.find((e) => e.type === "done");
     ok(done?.mode === "learn", "done reports learn mode");
+    ok(/professionally managed fund/.test(done?.answer || ""), "answer includes article content");
     ok(/investorsedge\.cibc\.com\/en\/learn/.test(done?.answer || ""), "answer links back to CIBC Learn pages");
     const badMode = await fetch("http://127.0.0.1:8799/api/agent", {
       method: "POST",

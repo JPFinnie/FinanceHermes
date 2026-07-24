@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>James Finnie — Resume (Mercury)</title>
+<style>
+  @page { size: Letter; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 8.5in; }
+  body {
+    font-family: 'FreeSerif', 'DejaVu Serif', serif;
+    color: #1a1a1a;
+    -webkit-print-color-adjust: exact;
+  }
+  .page {
+    width: 8.5in;
+    height: 11in;
+    padding: 0.5in 0.55in 0.4in;
+    overflow: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* Header */
+  h1 {
+    font-size: 26px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
+  .tagline {
+    font-size: 12.5px;
+    font-style: italic;
+    color: #b45309;
+    margin-top: 1px;
+  }
+  .contact {
+    font-size: 9.9px;
+    color: #444;
+    margin-top: 4px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #d8d2c6;
+  }
+  .contact span + span::before { content: "\00a0\00b7\00a0 "; color: #b8b0a0; }
+
+  /* Sections */
+  h2 {
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 2.6px;
+    color: #b45309;
+    text-transform: uppercase;
+    margin: 13px 0 5px;
+  }
+  .profile { font-size: 10.4px; line-height: 1.45; }
+
+  /* Jobs */
+  .job { margin-bottom: 8px; }
+  .job-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .job-title { font-size: 11.3px; font-weight: bold; }
+  .job-co { font-size: 10.6px; font-style: italic; color: #333; }
+  .job-dates { font-size: 9.9px; color: #666; white-space: nowrap; }
+  ul { list-style: none; margin-top: 2px; }
+  li {
+    font-size: 10.15px;
+    line-height: 1.42;
+    padding-left: 11px;
+    position: relative;
+    margin-bottom: 2.5px;
+  }
+  li::before { content: "•"; position: absolute; left: 1px; color: #b45309; }
+
+  /* Shipped projects */
+  .ship li { margin-bottom: 3px; }
+  .ship b { font-weight: bold; }
+  .url { color: #666; font-size: 9.8px; }
+
+  /* Education + toolkit */
+  .edu { font-size: 10.1px; line-height: 1.45; }
+  table.kit { border-collapse: collapse; margin-top: 1px; }
+  table.kit td { font-size: 10px; line-height: 1.45; vertical-align: baseline; padding: 0.5px 0; }
+  table.kit td.k { font-weight: bold; white-space: nowrap; padding-right: 14px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>James Finnie</h1>
+  <div class="tagline">Product Manager &mdash; AI Agents, Fintech &amp; Growth</div>
+  <div class="contact">
+    <span>Toronto, ON &mdash; remote (US/Canada)</span>
+    <span>james_finnie@icloud.com</span>
+    <span>+1 416 666 6331</span>
+    <span><a href="https://james-finnie.com">james-finnie.com</a></span>
+    <span><a href="https://linkedin.com/in/james-finnie">linkedin.com/in/james-finnie</a></span>
+    <span><a href="https://github.com/JPFinnie">github.com/JPFinnie</a></span>
+    <span>Canadian PR</span>
+  </div>
+
+  <h2>Profile</h2>
+  <div class="profile">
+    Product manager who ships working software, not decks. Seven years in regulated fintech &mdash; payments, trading, wealth &mdash;
+    now building the AI stack product teams run on inside one of Canada&rsquo;s largest banks: an agentic product-development platform,
+    a knowledge base agents read as ground truth, and ML personalization across the full client base. Nights and weekends I ship
+    deployed agents people actually use. Strong opinions about AI products, and the habit of measuring my way out of the wrong ones.
+  </div>
+
+  <h2>Experience</h2>
+
+  <div class="job">
+    <div class="job-head">
+      <div><span class="job-title">Senior Product Manager, AI &amp; Personalization</span> &nbsp;<span class="job-co">CIBC Investor&rsquo;s Edge &middot; Toronto</span></div>
+      <div class="job-dates">Jul 2025 &ndash; Present</div>
+    </div>
+    <ul>
+      <li>Built an internal Product &amp; Engineering platform where PMs converse with the bank&rsquo;s AI to go from question to artifact: it spins up lightweight working prototypes, pulls context from the corporate second brain and agent skills files, connects to Figma, and drafts PR-FAQs and BRDs &mdash; collapsing product-to-engineering handoffs across a large bank.</li>
+      <li>Mined years of historical engineering estimates against the BRDs that produced them, so the same platform returns evidence-grounded effort estimates for new proposals before the first planning meeting.</li>
+      <li>Built that second brain on Google&rsquo;s Open Knowledge Format (OKF, the standardized Karpathy LLM-wiki pattern): a markdown knowledge base indexing ~4,700 source documents into ~7,600 agent-readable notes with ~28,000 cross-references across SharePoint and Jira.</li>
+      <li>Lead ML personalization for CIBC&rsquo;s direct-investing platform: propensity models score every new client (options, ETFs, FHSA/RRSP) into Braze and Contentstack journeys, with closed-loop retraining lifting accuracy and conversion.</li>
+      <li>Replaced BRD-heavy delivery with one- and six-pagers and prototype-first decisions &mdash; Claude-built working prototypes pressure-test pricing and packaging concepts in days rather than quarters.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-head">
+      <div><span class="job-title">Manager, IoT &amp; Intelligent Systems (Product Owner)</span> &nbsp;<span class="job-co">Trudell Medical International &middot; Toronto</span></div>
+      <div class="job-dates">Oct 2023 &ndash; Jul 2025</div>
+    </div>
+    <ul>
+      <li>Owned the roadmap for AeroLiv, TMI&rsquo;s first Software-as-a-Medical-Device platform and its connected IoMT respiratory ecosystem; negotiated and ran a $5M multi-year development contract, delivering compliant with FDA, Health Canada and CE Mark.</li>
+      <li>Pulled the launch forward a quarter through ruthless scope prioritization and QA automation, leading a distributed team of twelve across North America and India.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-head">
+      <div><span class="job-title">Associate Product Manager, Global Trading Platforms</span> &nbsp;<span class="job-co">StoneX (NASDAQ: SNEX) &middot; London</span></div>
+      <div class="job-dates">May 2022 &ndash; Jun 2023</div>
+    </div>
+    <ul>
+      <li>Co-owned City Index and FOREX.com web/mobile platforms &mdash; roughly half of StoneX Retail&rsquo;s global OTC CFD and spread-bet volume; drove a quality initiative that cut iOS/Android crash rates 99.58%, lifting retention and trade completion.</li>
+      <li>Shipped UX and packaging improvements to SMART Signals, the in-house ML trading-signals product.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-head">
+      <div><span class="job-title">Product Analyst, Onboarding</span> &nbsp;<span class="job-co">Equals Money (LON: EQLS) &middot; London</span></div>
+      <div class="job-dates">Jun 2021 &ndash; May 2022</div>
+    </div>
+    <ul>
+      <li>Rebuilt B2B/B2C onboarding with automated KYC/KYB verification, lifting new-account conversion 35% and cutting approval from weeks to days.</li>
+    </ul>
+  </div>
+
+  <h2>Shipped &mdash; Nights &amp; Weekends</h2>
+  <ul class="ship">
+    <li><b>FinanceHermes</b> <span class="url">&middot; finance-hermes.vercel.app</span> &mdash; live financial-research agent with a hand-built harness: streaming tool-call loop over live web search, visible reasoning traces, server-side citation enforcement and a two-tier freemium gate; zero-dependency serverless deploy, demoed live to rooms of investment advisors.</li>
+    <li><b>Personal OKF knowledge base</b> &mdash; the same LLM-wiki pattern I run at work, run at home: a cross-linked markdown knowledge graph that Claude Code and other agents read as ground truth.</li>
+    <li><b>The Six Cut</b> <span class="url">&middot; six-cut.vercel.app</span> &mdash; Next.js discovery product ranking Toronto&rsquo;s independent butchers with a proprietary scoring methodology.</li>
+  </ul>
+
+  <h2>Education</h2>
+  <div class="edu">
+    <b>MA, International Studies &amp; Diplomacy</b> (Merit) &middot; SOAS, University of London &middot; 2021 &nbsp;&nbsp;|&nbsp;&nbsp;
+    <b>MA (SocSci), Business &amp; Management</b> (2:1) &middot; University of Glasgow &middot; 2020 &middot; Accenture-sponsored Open Banking (PSD2) research
+  </div>
+
+  <h2>Toolkit</h2>
+  <table class="kit">
+    <tr><td class="k">AI &amp; Agents</td><td>Claude API, Claude Code &amp; agent skills, agent harnesses (tool loops, SSE streaming, evals), RAG / OKF knowledge bases, open models (Hermes 4, Ollama, Mistral)</td></tr>
+    <tr><td class="k">Growth &amp; Data</td><td>Propensity modeling, A/B testing, funnel optimization, Braze, Contentstack, Amplitude, FullStory, Google Analytics</td></tr>
+    <tr><td class="k">Delivery</td><td>Prototype-first, PR-FAQs &amp; six-pagers, Jira, Confluence, Figma, Vercel, Next.js, Scrum</td></tr>
+  </table>
+
+</div>
+</body>
+</html>
